@@ -1,8 +1,9 @@
 package fuzzytime
 
-import (
-	"time"
-)
+
+// TODO: look into CLDR - http://cldr.unicode.org/index
+//       provides locale-specific names and format patterns
+
 
 /*
 dayLookup = {
@@ -24,7 +25,7 @@ dayLookup = {
 }
 */
 
-var monthLookup = map[string]time.Month{
+var monthLookup = map[string]int{
 	"jan": 1,
 	"feb": 2,
 	"mar": 3,

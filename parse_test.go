@@ -2,19 +2,28 @@ package fuzzytime
 
 import (
 	"testing"
-	"time"
+//	"time"
+	"fmt"
 )
 
 type datetimeTest struct {
 	input    string
-	expected string // expected result, as RFC3339 "2006-01-02T15:04:05Z07:00"
+	expect string
 }
 
-var noddytests = []datetimeTest{
-	{"Tuesday 16 December 2008", "2008-12-16T00:00:00Z"},
-	{"Friday    August    11, 2006", "2006-08-11T00:00:00Z"},
-	{"23rd November 2007", "2007-11-23T00:00:00Z"},
-	{"Jul 21, 08", "2008-07-21T00:00:00Z"},
+var noddydatetests = []datetimeTest{
+	{"Tuesday 16 December 2008", "2008-12-16"},
+	{"Friday    August    11, 2006", "2006-08-11"},
+	{"23rd November 2007", "2007-11-23"},
+	{"Jul 21, 08", "2008-07-21"},
+	{"2010-07-01", "2010-07-01"},
+	{"2010/07/01", "2010-07-01"},
+	{"may 2nd 1928", "1928-05-02"},
+}
+
+var noddytimetests = []datetimeTest{
+	{"4:48pm GMT", "16:48:00"},
+	{"4:48pm", "16:48:00"},
 }
 
 var dttests = []datetimeTest{
@@ -65,20 +74,44 @@ var dttests = []datetimeTest{
 	{"Monday 30 July 2012 08.38 BST", "2012-07-30T07:38:00Z"},        // (guardian.co.uk)
 }
 
-func TestParsing(t *testing.T) {
-	for _, test := range noddytests {
-		got, err := ExtractTime(test.input)
+func TestDates(t *testing.T) {
+	for _, test := range noddydatetests {
+		fd, err := ExtractDate(test.input)
 		if err != nil {
 			panic(err)
 		}
 
-		expected, err := time.Parse(time.RFC3339, test.expected)
+		got := fmt.Sprintf("%04d-%02d-%02d", fd.Year, fd.Month, fd.Day)
+
 		if err != nil {
 			panic(err)
 		}
 
-		if got != expected {
-			t.Errorf("ExtractTime('%v') = '%v', want '%v'", test.input, got, expected)
+		if got != test.expect {
+			t.Errorf("ExtractDate('%v') = '%v', want '%v'", test.input, got, test.expect)
 		}
 	}
 }
+
+
+func TestTimes(t *testing.T) {
+	for _, test := range noddytimetests {
+		ft, err := ExtractTime(test.input)
+		if err != nil {
+			panic(err)
+		}
+
+
+		got := fmt.Sprintf("%02d:%02d:%02d",ft.Hour,ft.Minute,ft.Second)
+
+		if err != nil {
+			panic(err)
+		}
+
+		if got != test.expect {
+			t.Errorf("ExtractTime('%v') = '%v', want '%v'", test.input, got, test.expect)
+		}
+	}
+}
+
+
