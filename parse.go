@@ -52,17 +52,17 @@ var dateCrackers = []*regexp.Regexp{
 
 	// "2007/03/18"
 	regexp.MustCompile(`(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})`),
+
+
+    // "22/02/2008"
+    // "22-02-2008"
+	// "22.02.2008"
+    regexp.MustCompile(`(?P<day>\d{1,2})[/.-](?P<month>\d{1,2})[/.-](?P<year>\d{4})`),
+    // "09-Apr-2007", "09-Apr-07"
+    regexp.MustCompile(`(?P<day>\d{1,2})-(?P<month>\w{3,})-(?P<year>(\d{4})|(\d{2}))`),
 }
 
 /*
-    # "22/02/2008"
-    # "22-02-2008"
-    # "22.02.2008"
-    r'(?P<day>\d{1,2})[/.-](?P<month>\d{1,2})[/.-](?P<year>\d{4})',
-    # "09-Apr-2007", "09-Apr-07"
-    r'(?P<day>\d{1,2})-(?P<month>\w{3,})-(?P<year>(\d{4})|(\d{2}))',
-
-
     # dd-mm-yy
     r'(?P<day>\d{1,2})-(?P<month>\d{1,2})-(?P<year>\d{2})',
     # dd/mm/yy
@@ -209,6 +209,7 @@ func ExtractTime(s string) (FuzzyTime, error) {
 
 		var hour, minute, second int = -1, -1, -1
 		var am, pm bool = false, false
+		var tzName string = ""
 		var err error
 		for i, name := range names {
 			start, end := matchSpans[i*2], matchSpans[(i*2)+1]
@@ -237,6 +238,8 @@ func ExtractTime(s string) (FuzzyTime, error) {
 				am = true
 			case "pm":
 				pm = true
+			case "tz":
+				tzName = sub
 			}
 
 			//			fmt.Printf("%d ('%s'): '%s' (%d-%d)\n", i, name, sub, start, end)
@@ -255,7 +258,7 @@ func ExtractTime(s string) (FuzzyTime, error) {
 			if am && hour == 12 {
 				hour -= 12
 			}
-			var ft = FuzzyTime{hour, minute, second, "", matchSpans[0], matchSpans[1]}
+			var ft = FuzzyTime{hour, minute, second, tzName, matchSpans[0], matchSpans[1]}
 			return ft, nil
 		}
 	}
