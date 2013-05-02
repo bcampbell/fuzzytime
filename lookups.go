@@ -1,9 +1,9 @@
 package fuzzytime
 
+// lookup.go contains lookup data (eg month names)
 
 // TODO: look into CLDR - http://cldr.unicode.org/index
 //       provides locale-specific names and format patterns
-
 
 /*
 dayLookup = {

@@ -2,13 +2,23 @@ package fuzzytime
 
 import (
 	"testing"
-//	"time"
+	//	"time"
 	"fmt"
 )
 
+type dtTest struct {
+	input string
+	date  Date
+	time  Time
+}
+
 type datetimeTest struct {
-	input    string
+	input  string
 	expect string
+}
+
+var noddydttests = []dtTest{
+	{"Tuesday 16 December 2008", *NewDate(2008, 12, 16), Time{}},
 }
 
 var noddydatetests = []datetimeTest{
@@ -76,12 +86,12 @@ var dttests = []datetimeTest{
 
 func TestDates(t *testing.T) {
 	for _, test := range noddydatetests {
-		fd, err := ExtractDate(test.input)
+		fd, _, err := ExtractDate(test.input)
 		if err != nil {
 			panic(err)
 		}
 
-		got := fmt.Sprintf("%04d-%02d-%02d", fd.Year, fd.Month, fd.Day)
+		got := fmt.Sprintf("%04d-%02d-%02d", fd.Year(), fd.Month(), fd.Day())
 
 		if err != nil {
 			panic(err)
@@ -93,16 +103,14 @@ func TestDates(t *testing.T) {
 	}
 }
 
-
 func TestTimes(t *testing.T) {
 	for _, test := range noddytimetests {
-		ft, err := ExtractTime(test.input)
+		ft, _, err := ExtractTime(test.input)
 		if err != nil {
 			panic(err)
 		}
 
-
-		got := fmt.Sprintf("%02d:%02d:%02d",ft.Hour,ft.Minute,ft.Second)
+		got := fmt.Sprintf("%02d:%02d:%02d", ft.Hour(), ft.Minute(), ft.Second())
 
 		if err != nil {
 			panic(err)
@@ -114,4 +122,15 @@ func TestTimes(t *testing.T) {
 	}
 }
 
+func TestDateTimes(t *testing.T) {
+	for _, test := range noddydttests {
+		fd, _, err := ExtractDate(test.input)
+		if err != nil {
+			panic(err)
+		}
 
+		if !fd.Equals(&test.date) {
+			t.Errorf("ExtractDate('%v') = '%v', want '%v'", test.input, fd, test.date)
+		}
+	}
+}
