@@ -2,8 +2,6 @@ package fuzzytime
 
 import (
 	"testing"
-	//	"time"
-//	"fmt"
 )
 
 type dtTest struct {
@@ -12,9 +10,11 @@ type dtTest struct {
 	time  Time
 }
 
+// TODO: add some more tests with numeric timezones
+
 var dateTimeTests = []dtTest{
-	{"2010-04-02T12:35:44+00:00", *NewDate(2010, 4, 2), *NewTime(12, 35, 44, "")},   //{iso8601, bbc blogs)
-	{"2008-03-10 13:21:36 GMT", *NewDate(2008, 3, 10), *NewTime(13, 21, 36, "GMT")}, //{technorati api)
+	{"2010-04-02T12:35:44+00:00", *NewDate(2010, 4, 2), *NewTime(12, 35, 44, "+00:00")}, //{iso8601, bbc blogs)
+	{"2008-03-10 13:21:36 GMT", *NewDate(2008, 3, 10), *NewTime(13, 21, 36, "GMT")},     //{technorati api)
 
 	{"9 Sep 2009 12.33", *NewDate(2009, 9, 9), *NewTime(12, 33, 0, "")},                        //(heraldscotland blogs)
 	{"May 25 2010 3:34PM", *NewDate(2010, 5, 25), *NewTime(15, 34, 0, "")},                     //(thetimes.co.uk)
@@ -54,11 +54,11 @@ var dateTimeTests = []dtTest{
 	{"Monday, May. 17, 2010", *NewDate(2010, 5, 17), Time{}}, // (time.com)
 
 	// TODO: this is a tricky one where hour can get picked up as year if not careful!
-	{"Thu Aug 25 10:46:55 BST 2011", *NewDate(2011, 8, 25), *NewTime(9, 46, 55, "BST")}, // (www.yorkshireeveningpost.co.uk)
+	{"Thu Aug 25 10:46:55 BST 2011", *NewDate(2011, 8, 25), *NewTime(10, 46, 55, "BST")}, // (www.yorkshireeveningpost.co.uk)
 
 	//
 	{"September, 26th 2011 by Christo Hall", *NewDate(2011, 9, 26), Time{}},             // (www.thenewwolf.co.uk)
-	{"Monday 30 July 2012 08.38 BST", *NewDate(2012, 7, 30), *NewTime(7, 38, 0, "BST")}, // (guardian.co.uk)
+	{"Monday 30 July 2012 08.38 BST", *NewDate(2012, 7, 30), *NewTime(8, 38, 0, "BST")}, // (guardian.co.uk)
 
 	// some more obscure cases...
 	{"May 2008", *NewDate(2008, 5, 1), Time{}},
@@ -69,11 +69,18 @@ func TestDateTimes(t *testing.T) {
 		fd, ft := Extract(test.input)
 
 		if !fd.Equals(&test.date) {
-			t.Errorf("ExtractDate('%v') = '%v', want '%v'", test.input, fd, test.date)
+			t.Errorf("ExtractDate('%v') = '%v', want '%v'", test.input, fd.String(), test.date.String())
 		}
 
 		if !ft.Equals(&test.time) {
-			t.Errorf("ExtractTime('%v') = '%v', want '%v'", test.input, ft, test.time)
+			t.Errorf("ExtractTime('%v') = '%v', want '%v'", test.input, ft.String(), test.time.String())
 		}
 	}
+
+	// Tricky case that needs fixing:
+	fd, _ := ExtractDate("Thu Aug 25 10:46:55 BST 2011")
+	if fd.Year() != 2011 {
+		t.Errorf("2-digit year issue still needs fixing.")
+	}
+
 }
