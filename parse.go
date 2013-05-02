@@ -41,6 +41,13 @@ func (d *Date) Equals(other *Date) bool {
 	return false
 }
 
+func (d *Date) Empty() bool {
+	if d.HasYear() || d.HasMonth() || d.HasDay() {
+		return false
+	}
+	return true
+}
+
 // NewDate creates a Date with all fields set
 func NewDate(y, m, d int) *Date {
 	return &Date{y, m, d}
@@ -83,6 +90,30 @@ func NewTime(h, m, s int, tz string) *Time {
 	return &Time{hourFlag | minuteFlag | secondFlag | tzFlag, h, m, s, tz}
 }
 
+// Equals returns true if times match
+func (t *Time) Equals(other *Time) bool {
+	if t.set != other.set {
+		return false
+	}
+	if t.HasHour() && t.hour != other.hour {
+		return false
+	}
+	if t.HasMinute() && t.minute != other.minute {
+		return false
+	}
+	if t.HasSecond() && t.second != other.second {
+		return false
+	}
+	if t.HasTZ() && t.tzName != other.tzName {
+		return false
+	}
+	return true
+}
+
+func (t *Time) Empty() bool {
+	return t.set == 0
+}
+
 // Span represents the range [Begin,End)
 type Span struct {
 	Begin int
@@ -95,33 +126,33 @@ var dateCrackers = []*regexp.Regexp{
 	//"Tue 29 Jan 08"
 	//"Monday, 22 October 2007"
 	//"Tuesday, 21st January, 2003"
-	regexp.MustCompile(`(?P<dayname>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?\s+(?P<month>\w{3,})[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
+	regexp.MustCompile(`(?i)(?P<dayname>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?\s+(?P<month>\w{3,})[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
 
 	// "Friday    August    11, 2006"
 	// "Tuesday October 14 2008"
 	// "Thursday August 21 2008"
 	// "Monday, May. 17, 2010"
-	regexp.MustCompile(`(?P<dayname>\w{3,})[.,\s]+(?P<month>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
+	regexp.MustCompile(`(?i)(?P<dayname>\w{3,})[.,\s]+(?P<month>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
 
 	// "9 Sep 2009", "09 Sep, 2009", "01 May 10"
 	// "23rd November 2007", "22nd May 2008"
-	regexp.MustCompile(`(?P<day>\d{1,2})(?:st|nd|rd|th)?\s+(?P<month>\w{3,})[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
+	regexp.MustCompile(`(?i)(?P<day>\d{1,2})(?:st|nd|rd|th)?\s+(?P<month>\w{3,})[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
 
 	// "Mar 3, 2007", "Jul 21, 08", "May 25 2010", "May 25th 2010", "February 10 2008"
-	regexp.MustCompile(`(?P<month>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
+	regexp.MustCompile(`(?i)(?P<month>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
 
 	// "2010-04-02"
-	regexp.MustCompile(`(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})`),
+	regexp.MustCompile(`(?i)(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})`),
 
 	// "2007/03/18"
-	regexp.MustCompile(`(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})`),
+	regexp.MustCompile(`(?i)(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})`),
 
 	// "22/02/2008"
 	// "22-02-2008"
 	// "22.02.2008"
-	regexp.MustCompile(`(?P<day>\d{1,2})[/.-](?P<month>\d{1,2})[/.-](?P<year>\d{4})`),
+	regexp.MustCompile(`(?i)(?P<day>\d{1,2})[/.-](?P<month>\d{1,2})[/.-](?P<year>\d{4})`),
 	// "09-Apr-2007", "09-Apr-07"
-	regexp.MustCompile(`(?P<day>\d{1,2})-(?P<month>\w{3,})-(?P<year>(\d{4})|(\d{2}))`),
+	regexp.MustCompile(`(?i)(?P<day>\d{1,2})-(?P<month>\w{3,})-(?P<year>(\d{4})|(\d{2}))`),
 }
 
 /*
@@ -151,34 +182,34 @@ var dateCrackers = []*regexp.Regexp{
 */
 
 // "BST" ,"+02:00", "+02"
-var tzPat string = `(?P<tz>Z|[A-Z]{2,10}|(([-+])(\d{2})((:?)(\d{2}))?))`
-var ampmPat string = `(?:(?P<am>am)|(?P<pm>pm))`
+var tzPat string = `(?i)(?P<tz>Z|[A-Z]{2,10}|(([-+])(\d{2})((:?)(\d{2}))?))`
+var ampmPat string = `(?i)(?:(?P<am>am)|(?P<pm>pm))`
 
 var timeCrackers = []*regexp.Regexp{
 	// "4:48PM GMT"
-	regexp.MustCompile(`(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*` + ampmPat + `\s*` + tzPat),
+	regexp.MustCompile(`(?i)(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*` + ampmPat + `\s*` + tzPat),
 
 	// "3:34PM"
 	// "10:42 am"
-	regexp.MustCompile(`(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*` + ampmPat),
+	regexp.MustCompile(`(?i)(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*` + ampmPat),
 
 	// "13:21:36 GMT"
 	// "15:29 GMT"
 	// "12:35:44+00:00"
 	// "00.01 BST"
-	regexp.MustCompile(`(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*` + tzPat),
+	regexp.MustCompile(`(?i)(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*` + tzPat),
 
 	// "12.33"
 	// "14:21"
 	// TODO: BUG: this'll also pick up time from "30.25.2011"!
-	regexp.MustCompile(`(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*`),
+	regexp.MustCompile(`(?i)(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*`),
 
 	// TODO: add support for microseconds?
 }
 
 // ExtractDate tries to parse a date from a string.
-// It returns a Date, a span (and/or any error that might have occured)
-func ExtractDate(s string) (fd Date, span Span, err error) {
+// It returns a Date and Span indicating which part of string matched.
+func ExtractDate(s string) (fd Date, span Span) {
 
 	for _, pat := range dateCrackers {
 		names := pat.SubexpNames()
@@ -243,20 +274,21 @@ func ExtractDate(s string) (fd Date, span Span, err error) {
 		// got enough?
 		if fd.HasYear() && fd.HasMonth() && fd.HasDay() {
 			span.Begin, span.End = matchSpans[0], matchSpans[1]
-			err = nil
 			return
 		}
 	}
 
-	err = errors.New("Date not found")
+	// nothing. Just return an empty date and span
+	fd = Date{}
+	span = Span{}
 	return
 }
 
 //return time.Date(fd.Year, fd.Month, fd.Day, 0, 0, 0, 0, time.UTC), nil
 
 // ExtractTime tries to parse a time from a string.
-// It returns a Time, Span (and/or any error that might have occured)
-func ExtractTime(s string) (Time, Span, error) {
+// It returns a Time and a Span indicating which part of string matched
+func ExtractTime(s string) (Time, Span) {
 	for _, pat := range timeCrackers {
 		names := pat.SubexpNames()
 		matchSpans := pat.FindStringSubmatchIndex(s)
@@ -299,7 +331,7 @@ func ExtractTime(s string) (Time, Span, error) {
 			case "pm":
 				pm = true
 			case "tz":
-				tzName = sub
+				tzName = strings.ToUpper(sub)
 			}
 
 		}
@@ -318,24 +350,39 @@ func ExtractTime(s string) (Time, Span, error) {
 			}
 			var ft = *NewTime(hour, minute, second, tzName)
 			var span = Span{matchSpans[0], matchSpans[1]}
-			return ft, span, nil
+			return ft, span
 		}
 	}
 
-	return Time{}, Span{}, errors.New("Time not found")
+	// nothing. Just return an empty time and span
+	return Time{}, Span{}
+}
+
+// TODO: return sensible span(s)!
+func Extract(s string) (Date, Time) {
+	ft, span := ExtractTime(s)
+	if !ft.Empty() {
+		// snip the matched time out of the string
+		// (hack for nasty case where an hour can look like a 2-digit year)
+		s = s[:span.Begin] + s[span.End:]
+	}
+
+	fd, _ := ExtractDate(s)
+
+	return fd, ft
 }
 
 func Parse(s string) (time.Time, error) {
-	ft, span, timeErr := ExtractTime(s)
-	if timeErr == nil {
+	ft, span := ExtractTime(s)
+	if !ft.Empty() {
 		// snip the matched time out of the string
 		s = s[:span.Begin] + s[span.End:]
 	}
 
-	fd, _, dateErr := ExtractDate(s)
+	fd, _ := ExtractDate(s)
 
-	if dateErr == nil {
-		if timeErr == nil {
+	if !fd.Empty() {
+		if !ft.Empty() {
 			return time.Date(fd.Year(), time.Month(fd.Month()), fd.Day(), ft.Hour(), ft.Minute(), ft.Second(), 0, time.UTC), nil
 		} else {
 			// ok if time missing
