@@ -2,6 +2,7 @@ package fuzzytime
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -48,6 +49,21 @@ func (d *Date) Empty() bool {
 	return true
 }
 
+func (d *Date) String() string {
+	var year, month, day = "????", "??", "??"
+	if d.HasYear() {
+		year = fmt.Sprintf("%04d", d.Year())
+	}
+	if d.HasMonth() {
+		month = fmt.Sprintf("%02d", d.Month())
+	}
+	if d.HasDay() {
+		day = fmt.Sprintf("%02d", d.Day())
+	}
+
+	return year + "-" + month + "-" + day
+}
+
 // NewDate creates a Date with all fields set
 func NewDate(y, m, d int) *Date {
 	return &Date{y, m, d}
@@ -78,6 +94,7 @@ func (t *Time) Minute() int { return t.minute }
 
 // Second returns the second (result undefined if field unset)
 func (t *Time) Second() int { return t.second }
+func (t *Time) TZ() string  { return t.tzName }
 
 func (t *Time) SetHour(hour int)     { t.hour = hour }
 func (t *Time) SetMinute(minute int) { t.minute = minute }
@@ -108,6 +125,22 @@ func (t *Time) Equals(other *Time) bool {
 		return false
 	}
 	return true
+}
+func (t *Time) String() string {
+	var hour, minute, second, tz = "????", "??", "??", ""
+	if t.HasHour() {
+		hour = fmt.Sprintf("%02d", t.Hour())
+	}
+	if t.HasMinute() {
+		minute = fmt.Sprintf("%02d", t.Minute())
+	}
+	if t.HasSecond() {
+		second = fmt.Sprintf("%02d", t.Second())
+	}
+	if t.HasTZ() {
+		tz = " " + t.TZ()
+	}
+	return hour + ":" + minute + ":" + second + tz
 }
 
 func (t *Time) Empty() bool {
@@ -284,8 +317,6 @@ func ExtractDate(s string) (fd Date, span Span) {
 	return
 }
 
-//return time.Date(fd.Year, fd.Month, fd.Day, 0, 0, 0, 0, time.UTC), nil
-
 // ExtractTime tries to parse a time from a string.
 // It returns a Time and a Span indicating which part of string matched
 func ExtractTime(s string) (Time, Span) {
@@ -331,7 +362,12 @@ func ExtractTime(s string) (Time, Span) {
 			case "pm":
 				pm = true
 			case "tz":
-				tzName = strings.ToUpper(sub)
+				if _, ok := tzTable[strings.ToUpper(sub)]; ok {
+					tzName = strings.ToUpper(sub)
+				} else {
+					// doesn't look like a timezone after all
+					break
+				}
 			}
 
 		}
