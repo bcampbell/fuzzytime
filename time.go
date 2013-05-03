@@ -1,6 +1,7 @@
 package fuzzytime
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -83,6 +84,25 @@ func (t *Time) String() string {
 
 func (t *Time) Empty() bool {
 	return t.set == 0
+}
+
+func (t *Time) IsoFormat() (string, error) {
+	if !t.HasHour() || !t.HasMinute() {
+		return "", errors.New("missing time info")
+	}
+
+	// allow missing seconds
+	if !t.HasSecond() {
+		t.SetSecond(0)
+	}
+
+	//
+	var tzpart = ""
+	if t.HasTZ() {
+		// TODO: convert to UTC offset or Z
+		tzpart = t.TZ()
+	}
+	return fmt.Sprintf("%02d:%02d:%02d%s", t.Hour(), t.Minute(), t.Second(), tzpart), nil
 }
 
 // match one of:

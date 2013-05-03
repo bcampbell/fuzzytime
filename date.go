@@ -1,6 +1,7 @@
 package fuzzytime
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -60,6 +61,15 @@ func (d *Date) String() string {
 	}
 
 	return year + "-" + month + "-" + day
+}
+
+func (d *Date) IsoFormat() (string, error) {
+	// require full date
+	if !(d.HasYear() && d.HasMonth() && d.HasDay()) {
+		return "", errors.New("date information missing")
+	}
+
+	return fmt.Sprintf("%04d-%02d-%02d", d.Year(), d.Month(), d.Day()), nil
 }
 
 // NewDate creates a Date with all fields set

@@ -2,6 +2,7 @@ package fuzzytime
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -43,4 +44,18 @@ func Parse(s string) (time.Time, error) {
 		}
 	}
 	return time.Time{}, errors.New("no date found")
+}
+
+func IsoFormat(d Date, t Time) (string, error) {
+	dpart, derr := d.IsoFormat()
+	tpart, terr := t.IsoFormat()
+
+	if derr == nil {
+		return "", derr
+	}
+
+	if terr != nil {
+		return fmt.Sprintf("%sT%s", dpart, tpart), nil
+	}
+	return dpart, nil
 }
