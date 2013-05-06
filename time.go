@@ -65,6 +65,9 @@ func (t *Time) Equals(other *Time) bool {
 	}
 	return true
 }
+
+// String returns "hh:mm:ss tz", with question marks in place of
+// any missing values (except for timezone, which will be blank if missing)
 func (t *Time) String() string {
 	var hour, minute, second, tz = "????", "??", "??", ""
 	if t.HasHour() {
@@ -82,10 +85,14 @@ func (t *Time) String() string {
 	return hour + ":" + minute + ":" + second + tz
 }
 
+// Empty tests if time is blank (ie all fields unset)
 func (t *Time) Empty() bool {
 	return t.set == 0
 }
 
+// IsoFormat returns "HH:MM:SSTZ" (or error if required fields missing)
+// At least hours and minutes must be set for this to work - seconds will
+// be assumed to be zero.
 func (t *Time) IsoFormat() (string, error) {
 	if !t.HasHour() || !t.HasMinute() {
 		return "", errors.New("missing time info")

@@ -41,6 +41,7 @@ func (d *Date) Equals(other *Date) bool {
 	return false
 }
 
+// Empty tests if date is blank (ie all fields unset)
 func (d *Date) Empty() bool {
 	if d.HasYear() || d.HasMonth() || d.HasDay() {
 		return false
@@ -48,6 +49,8 @@ func (d *Date) Empty() bool {
 	return true
 }
 
+// String returns "YYYY-MM-DD" with question marks in place of
+// any missing values
 func (d *Date) String() string {
 	var year, month, day = "????", "??", "??"
 	if d.HasYear() {
@@ -63,6 +66,7 @@ func (d *Date) String() string {
 	return year + "-" + month + "-" + day
 }
 
+// IsoFormat returns "YYYY-MM-DD" (or error if fields missing)
 func (d *Date) IsoFormat() (string, error) {
 	// require full date
 	if !(d.HasYear() && d.HasMonth() && d.HasDay()) {

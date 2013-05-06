@@ -11,7 +11,7 @@ type dtTest struct {
 }
 
 // TODO: add some more tests with numeric timezones
-
+// TODO: use DateTime.String()-style strings for expected results
 var dateTimeTests = []dtTest{
 	{"2010-04-02T12:35:44+00:00", *NewDate(2010, 4, 2), *NewTime(12, 35, 44, "+00:00")}, //{iso8601, bbc blogs)
 	{"2008-03-10 13:21:36 GMT", *NewDate(2008, 3, 10), *NewTime(13, 21, 36, "GMT")},     //{technorati api)
@@ -66,14 +66,17 @@ var dateTimeTests = []dtTest{
 
 func TestDateTimes(t *testing.T) {
 	for _, test := range dateTimeTests {
-		fd, ft := Extract(test.input)
+		dt := Extract(test.input)
+
+		fd := dt.Date
+		ft := dt.Time
 
 		if !fd.Equals(&test.date) {
-			t.Errorf("ExtractDate('%v') = '%v', want '%v'", test.input, fd.String(), test.date.String())
+			t.Errorf("Extract('%v') time got '%v', want '%v'", test.input, fd.String(), test.date.String())
 		}
 
 		if !ft.Equals(&test.time) {
-			t.Errorf("ExtractTime('%v') = '%v', want '%v'", test.input, ft.String(), test.time.String())
+			t.Errorf("Extract('%v') date got '%v', want '%v'", test.input, ft.String(), test.time.String())
 		}
 	}
 

@@ -13,7 +13,7 @@ type Span struct {
 }
 
 // TODO: return sensible span(s)!
-func Extract(s string) (Date, Time) {
+func Extract(s string) DateTime {
 	ft, span := ExtractTime(s)
 	if !ft.Empty() {
 		// snip the matched time out of the string
@@ -23,7 +23,7 @@ func Extract(s string) (Date, Time) {
 
 	fd, _ := ExtractDate(s)
 
-	return fd, ft
+	return DateTime{fd, ft}
 }
 
 func Parse(s string) (time.Time, error) {
