@@ -41,6 +41,19 @@ func (d *Date) Equals(other *Date) bool {
 	return false
 }
 
+func (d *Date) Conflicts(other *Date) bool {
+	if d.HasYear() && other.HasYear() && d.Year() != other.Year() {
+		return true
+	}
+	if d.HasMonth() && other.HasMonth() && d.Month() != other.Month() {
+		return true
+	}
+	if d.HasDay() && other.HasDay() && d.Day() != other.Day() {
+		return true
+	}
+	return false
+}
+
 // Empty tests if date is blank (ie all fields unset)
 func (d *Date) Empty() bool {
 	if d.HasYear() || d.HasMonth() || d.HasDay() {

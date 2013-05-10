@@ -66,6 +66,23 @@ func (t *Time) Equals(other *Time) bool {
 	return true
 }
 
+func (t *Time) Conflicts(other *Time) bool {
+	if t.HasHour() && other.HasHour() && t.Hour() != other.Hour() {
+		return true
+	}
+	if t.HasMinute() && other.HasMinute() && t.Minute() != other.Minute() {
+		return true
+	}
+	if t.HasSecond() && other.HasSecond() && t.Second() != other.Second() {
+		return true
+	}
+	if t.HasTZ() && other.HasTZ() && t.TZ() != other.TZ() {
+		return true
+	}
+
+	return false // no conflict
+}
+
 // String returns "hh:mm:ss tz", with question marks in place of
 // any missing values (except for timezone, which will be blank if missing)
 func (t *Time) String() string {

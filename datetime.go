@@ -39,10 +39,19 @@ func (dt *DateTime) IsoFormat() (string, error) {
 		return d, derr
 	}
 
-	t, terr := dt.Date.IsoFormat()
+	t, terr := dt.Time.IsoFormat()
 	if terr != nil {
 		return "", terr
 	}
 
 	return d + "T" + t, nil
+}
+
+// FullDate returns true if Year, Month and Day are all set
+func (dt *DateTime) HasFullDate() bool {
+	return dt.HasYear() && dt.HasMonth() && dt.HasDay()
+}
+
+func (dt *DateTime) Conflicts(other *DateTime) bool {
+	return dt.Time.Conflicts(&other.Time) || dt.Date.Conflicts(&other.Date)
 }
