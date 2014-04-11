@@ -1,7 +1,6 @@
 package fuzzytime
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -35,9 +34,10 @@ func (t *Time) Minute() int { return t.minute }
 func (t *Time) Second() int { return t.second }
 func (t *Time) TZ() string  { return t.tzName }
 
-func (t *Time) SetHour(hour int)     { t.hour = hour }
-func (t *Time) SetMinute(minute int) { t.minute = minute }
-func (t *Time) SetSecond(second int) { t.second = second }
+func (t *Time) SetHour(hour int)     { t.hour = hour; t.set |= hourFlag }
+func (t *Time) SetMinute(minute int) { t.minute = minute; t.set |= minuteFlag }
+func (t *Time) SetSecond(second int) { t.second = second; t.set |= secondFlag }
+func (t *Time) SetTZ(tz string)      { t.tzName = tz; t.set |= tzFlag }
 func (t *Time) HasHour() bool        { return (t.set & hourFlag) != 0 }
 func (t *Time) HasMinute() bool      { return (t.set & minuteFlag) != 0 }
 func (t *Time) HasSecond() bool      { return (t.set & secondFlag) != 0 }
@@ -107,10 +107,8 @@ func (t *Time) Empty() bool {
 	return t.set == 0
 }
 
-// IsoFormat returns "HH:MM:SSTZ" (or error if required fields missing)
-// At least hours and minutes must be set for this to work - seconds will
-// be assumed to be zero.
-func (t *Time) IsoFormat() (string, error) {
+// Return the most precise possible ISO-formatted time
+func (t *Time) ISOFormat() string {
 	var out string
 	if t.HasHour() {
 		if t.HasMinute() {
@@ -122,17 +120,14 @@ func (t *Time) IsoFormat() (string, error) {
 		} else {
 			out = fmt.Sprintf("%02d", t.Hour())
 		}
-	} else {
-		return "", errors.New("time is missing hour")
-	}
-	/*
-		//
 		if t.HasTZ() {
-			// TODO: convert to UTC offset or Z
-			tzpart = t.TZ()
+			offset, err := parseTZ(t.TZ())
+			if err == nil {
+				out += offsetToTZ(offset)
+			}
 		}
-	*/
-	return out, nil
+	}
+	return out
 }
 
 // match one of:
@@ -140,8 +135,8 @@ func (t *Time) IsoFormat() (string, error) {
 //  Z
 //  +hh:mm, +hhmm, or +hh
 //  -hh:mm, -hhmm, or -hh
-var tzPat string = `(?i)(?P<tz>Z|[A-Z]{2,10}|(([-+])(\d{2})((:?)(\d{2}))?))`
-var ampmPat string = `(?i)(?:(?P<am>am)|(?P<pm>pm))`
+var tzPat string = `(?i)(?P<tz>Z|[A-Z]{2,5}|(([-+])(\d{2})((:?)(\d{2}))?))`
+var ampmPat string = `(?i)(?:(?P<am>(am|a[.]m[.]))|(?P<pm>(pm|p[.]m[.])))`
 
 var timeCrackers = []*regexp.Regexp{
 	// "4:48PM GMT"
@@ -159,7 +154,7 @@ var timeCrackers = []*regexp.Regexp{
 
 	// "12.33"
 	// "14:21"
-	// TODO: BUG: this'll also pick up time from "30.25.2011"!
+	// TODO: BUG: this'll also pick up time from "30.11.2011"!
 	regexp.MustCompile(`(?i)(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*`),
 
 	// TODO: add support for microseconds?
@@ -210,29 +205,33 @@ func ExtractTime(s string) (Time, Span) {
 			case "pm":
 				pm = true
 			case "tz":
-				if _, ok := tzTable[strings.ToUpper(sub)]; ok {
-					tzName = strings.ToUpper(sub)
-				} else {
+				_, err := parseTZ(sub)
+				if err != nil {
 					// doesn't look like a timezone after all
 					break
 				}
+				tzName = sub
 			}
 
 		}
 
 		// got enough?
 		if hour >= 0 && minute >= 0 {
-			// ok if seconds are missing - just assume zero
-			if second == -1 {
-				second = 0
-			}
 			if pm && (hour >= 1) && (hour <= 11) {
 				hour += 12
 			}
 			if am && (hour == 12) {
 				hour -= 12
 			}
-			var ft = *NewTime(hour, minute, second, tzName)
+			ft := Time{}
+			ft.SetHour(hour)
+			ft.SetMinute(minute)
+			if second != -1 {
+				ft.SetSecond(second)
+			}
+			if tzName != "" {
+				ft.SetTZ(tzName)
+			}
 			var span = Span{matchSpans[0], matchSpans[1]}
 			return ft, span
 		}

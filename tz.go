@@ -1,148 +1,221 @@
 package fuzzytime
 
+import (
+	"errors"
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+)
+
 type TZ struct {
 	Name   string
-	Offset string
-	Locale string
+	Offset string // ISO8601 timezone [+-]<HH>[:<MM>]
+	Locale string // TODO: locale identifiers to help resolve ambiguities?
 }
 
+// lookup table of common abbreviations of timezones
+// source: http://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
+//
+// Note that the names are not unambiguous... (eg BST: Britain or Bangladesh?)
 var tzTable = map[string][]TZ{
-	"ACDT": {{"ACDT", "UTC+10:30", ""}}, //Australian Central Daylight Time
-	"ACST": {{"ACST", "UTC+09:30", ""}}, //Australian Central Standard Time
-	"ACT":  {{"ACT", "UTC+08", ""}},     //ASEAN Common Time
-	"ADT":  {{"ADT", "UTC-03", ""}},     //Atlantic Daylight Time
-	"AEDT": {{"AEDT", "UTC+11", ""}},    //Australian Eastern Daylight Time
-	"AEST": {{"AEST", "UTC+10", ""}},    //Australian Eastern Standard Time
-	"AFT":  {{"AFT", "UTC+04:30", ""}},  //Afghanistan Time
-	"AKDT": {{"AKDT", "UTC-08", ""}},    //Alaska Daylight Time
-	"AKST": {{"AKST", "UTC-09", ""}},    //Alaska Standard Time
-	"AMST": {{"AMST", "UTC+05", ""}},    //Armenia Summer Time
-	"AMT":  {{"AMT", "UTC+04", ""}},     //Armenia Time
-	"ART":  {{"ART", "UTC-03", ""}},     //Argentina Time
-	"AST": {{"AST", "UTC+03", ""}, //"Arab Standard Time (Kuwait, Riyadh)"
-		{"AST", "UTC+04", ""},  //"Arabian Standard Time (Abu Dhabi, Muscat)"
-		{"AST", "UTC+03", ""},  //Arabic Standard Time (Baghdad)
-		{"AST", "UTC-04", ""}}, //Atlantic Standard Time
-	"AWDT":  {{"AWDT", "UTC+09", ""}},  //Australian Western Daylight Time
-	"AWST":  {{"AWST", "UTC+08", ""}},  //Australian Western Standard Time
-	"AZOST": {{"AZOST", "UTC-01", ""}}, //Azores Standard Time
-	"AZT":   {{"AZT", "UTC+04", ""}},   //Azerbaijan Time
-	"BDT":   {{"BDT", "UTC+08", ""}},   //Brunei Time
-	"BIOT":  {{"BIOT", "UTC+06", ""}},  //British Indian Ocean Time
-	"BIT":   {{"BIT", "UTC-12", ""}},   //Baker Island Time
-	"BOT":   {{"BOT", "UTC-04", ""}},   //Bolivia Time
-	"BRT":   {{"BRT", "UTC-03", ""}},   //Brasilia Time
-	"BST": {{"BST", "UTC+06", ""}, //Bangladesh Standard Time
-		{"BST", "UTC+01", ""}}, //British Summer Time (British Standard Time from Feb 1968 to Oct 1971)
-	"BTT":   {{"BTT", "UTC+06", ""}},      //Bhutan Time
-	"CAT":   {{"CAT", "UTC+02", ""}},      //Central Africa Time
-	"CCT":   {{"CCT", "UTC+06:30", ""}},   //Cocos Islands Time
-	"CDT":   {{"CDT", "UTC-05", ""}},      //Central Daylight Time (North America)
-	"CEDT":  {{"CEDT", "UTC+02", ""}},     //Central European Daylight Time
-	"CEST":  {{"CEST", "UTC+02", ""}},     //Central European Summer Time (Cf. HAEC)
-	"CET":   {{"CET", "UTC+01", ""}},      //Central European Time
-	"CHADT": {{"CHADT", "UTC+13:45", ""}}, //Chatham Daylight Time
-	"CHAST": {{"CHAST", "UTC+12:45", ""}}, //Chatham Standard Time
-	"CIST":  {{"CIST", "UTC-08", ""}},     //Clipperton Island Standard Time
-	"CKT":   {{"CKT", "UTC-10", ""}},      //Cook Island Time
-	"CLST":  {{"CLST", "UTC-03", ""}},     //Chile Summer Time
-	"CLT":   {{"CLT", "UTC-04", ""}},      //Chile Standard Time
-	"COST":  {{"COST", "UTC-04", ""}},     //Colombia Summer Time
-	"COT":   {{"COT", "UTC-05", ""}},      //Colombia Time
-	"CST": {{"CST", "UTC-06", ""}, //Central Standard Time (North America)
-		{"CST", "UTC+08", ""},       //China Standard Time
-		{"CST", "UTC+09:30", "au"}}, //Central Standard Time (Australia)
-	"CT":   {{"CT", "UTC+08", ""}},   //China Time
-	"CVT":  {{"CVT", "UTC-01", ""}},  //Cape Verde Time
-	"CXT":  {{"CXT", "UTC+07", ""}},  //Christmas Island Time
-	"CHST": {{"CHST", "UTC+10", ""}}, //Chamorro Standard Time
-	"DFT":  {{"DFT", "UTC+01", ""}},  //AIX specific equivalent of Central European Time
-	"EAST": {{"EAST", "UTC-06", ""}}, //Easter Island Standard Time
-	"EAT":  {{"EAT", "UTC+03", ""}},  //East Africa Time
-	"ECT": {{"ECT", "UTC-04", ""}, //Eastern Caribbean Time (does not recognise DST)
-		{"ECT", "UTC-05", ""}}, //Ecuador Time
-	"EDT":  {{"EDT", "UTC-04", ""}},  //Eastern Daylight Time (North America)
-	"EEDT": {{"EEDT", "UTC+03", ""}}, //Eastern European Daylight Time
-	"EEST": {{"EEST", "UTC+03", ""}}, //Eastern European Summer Time
-	"EET":  {{"EET", "UTC+02", ""}},  //Eastern European Time
-	"EST":  {{"EST", "UTC-05", ""}},  //Eastern Standard Time (North America)
-	"FET":  {{"FET", "UTC+03", ""}},  //Further-eastern_European_Time
-	"FJT":  {{"FJT", "UTC+12", ""}},  //Fiji Time
-	"FKST": {{"FKST", "UTC-03", ""}}, //Falkland Islands Summer Time
-	"FKT":  {{"FKT", "UTC-04", ""}},  //Falkland Islands Time
-	"GALT": {{"GALT", "UTC-06", ""}}, //Galapagos Time
-	"GET":  {{"GET", "UTC+04", ""}},  //Georgia Standard Time
-	"GFT":  {{"GFT", "UTC-03", ""}},  //French Guiana Time
-	"GILT": {{"GILT", "UTC+12", ""}}, //Gilbert Island Time
-	"GIT":  {{"GIT", "UTC-09", ""}},  //Gambier Island Time
-	"GMT":  {{"GMT", "UTC", ""}},     //Greenwich Mean Time
-	"GST": {{"GST", "UTC-02", ""}, //South Georgia and the South Sandwich Islands
-		{"GST", "UTC+04", ""}}, //Gulf Standard Time
-	"GYT":  {{"GYT", "UTC-04", ""}},     //Guyana Time
-	"HADT": {{"HADT", "UTC-09", ""}},    //Hawaii-Aleutian Daylight Time
-	"HAEC": {{"HAEC", "UTC+02", ""}},    //Heure Avancée d'Europe Centrale francised name for CEST
-	"HAST": {{"HAST", "UTC-10", ""}},    //Hawaii-Aleutian Standard Time
-	"HKT":  {{"HKT", "UTC+08", ""}},     //Hong Kong Time
-	"HMT":  {{"HMT", "UTC+05", ""}},     //Heard and McDonald Islands Time
-	"HST":  {{"HST", "UTC-10", ""}},     //Hawaii Standard Time
-	"ICT":  {{"ICT", "UTC+07", ""}},     //Indochina Time
-	"IDT":  {{"IDT", "UTC+03", ""}},     //Israeli Daylight Time
-	"IRKT": {{"IRKT", "UTC+08", ""}},    //Irkutsk Time
-	"IRST": {{"IRST", "UTC+03:30", ""}}, //Iran Standard Time
-	"IST": {{"IST", "UTC+05:30", ""}, //Indian Standard Time
-		{"IST", "UTC+01", "ie"}, //Irish Summer Time
-		{"IST", "UTC+02", ""}},  //Israel Standard Time
-	"JST":  {{"JST", "UTC+09", ""}},     //Japan Standard Time
-	"KRAT": {{"KRAT", "UTC+07", ""}},    //Krasnoyarsk Time
-	"KST":  {{"KST", "UTC+09", ""}},     //Korea Standard Time
-	"LHST": {{"LHST", "UTC+10:30", ""}}, //Lord Howe Standard Time
-	"LINT": {{"LINT", "UTC+14", ""}},    //Line Islands Time
-	"MAGT": {{"MAGT", "UTC+11", ""}},    //Magadan Time
-	"MDT":  {{"MDT", "UTC-06", ""}},     //Mountain Daylight Time (North America)
-	"MET":  {{"MET", "UTC+01", ""}},     //Middle European Time Same zone as CET
-	"MEST": {{"MEST", "UTC+02", ""}},    //Middle European Saving Time Same zone as CEST
-	"MIT":  {{"MIT", "UTC-09:30", ""}},  //Marquesas Islands Time
-	"MSK":  {{"MSK", "UTC+04", ""}},     //Moscow Time
-	"MST": {{"MST", "UTC+08", ""}, //Malaysian Standard Time
-		{"MST", "UTC-07", ""},     //Mountain Standard Time (North America)
-		{"MST", "UTC+06:30", ""}}, //Myanmar Standard Time
-	"MUT":  {{"MUT", "UTC+04", ""}},    //Mauritius Time
-	"MYT":  {{"MYT", "UTC+08", ""}},    //Malaysia Time
-	"NDT":  {{"NDT", "UTC-02:30", ""}}, //Newfoundland Daylight Time
-	"NFT":  {{"NFT", "UTC+11:30", ""}}, //Norfolk Time[1]
-	"NPT":  {{"NPT", "UTC+05:45", ""}}, //Nepal Time
-	"NST":  {{"NST", "UTC-03:30", ""}}, //Newfoundland Standard Time
-	"NT":   {{"NT", "UTC-03:30", ""}},  //Newfoundland Time
-	"NZDT": {{"NZDT", "UTC+13", ""}},   //New Zealand Daylight Time
-	"NZST": {{"NZST", "UTC+12", ""}},   //New Zealand Standard Time
-	"OMST": {{"OMST", "UTC+06", ""}},   //Omsk Time
-	"PDT":  {{"PDT", "UTC-07", ""}},    //Pacific Daylight Time (North America)
-	"PETT": {{"PETT", "UTC+12", ""}},   //Kamchatka Time
-	"PHOT": {{"PHOT", "UTC+13", ""}},   //Phoenix Island Time
-	"PKT":  {{"PKT", "UTC+05", ""}},    //Pakistan Standard Time
-	"PST": {{"PST", "UTC-08", ""}, //Pacific Standard Time (North America)
-		{"PST", "UTC+08", ""}}, //Philippine Standard Time
-	"RET":  {{"RET", "UTC+04", ""}},    //Réunion Time
-	"SAMT": {{"SAMT", "UTC+04", ""}},   //Samara Time
-	"SAST": {{"SAST", "UTC+02", ""}},   //South African Standard Time
-	"SBT":  {{"SBT", "UTC+11", ""}},    //Solomon Islands Time
-	"SCT":  {{"SCT", "UTC+04", ""}},    //Seychelles Time
-	"SGT":  {{"SGT", "UTC+08", ""}},    //Singapore Time
-	"SLT":  {{"SLT", "UTC+05:30", ""}}, //Sri Lanka Time
-	"SST": {{"SST", "UTC-11", ""}, //Samoa Standard Time
-		{"SST", "UTC+08", ""}}, //Singapore Standard Time
-	"TAHT": {{"TAHT", "UTC-10", ""}},   //Tahiti Time
-	"THA":  {{"THA", "UTC+07", ""}},    //Thailand Standard Time
-	"UTC":  {{"UTC", "UTC", ""}},       //Coordinated Universal Time
-	"UYST": {{"UYST", "UTC-02", ""}},   //Uruguay Summer Time
-	"UYT":  {{"UYT", "UTC-03", ""}},    //Uruguay Standard Time
-	"VET":  {{"VET", "UTC-04:30", ""}}, //Venezuelan Standard Time
-	"VLAT": {{"VLAT", "UTC+10", ""}},   //Vladivostok Time
-	"WAT":  {{"WAT", "UTC+01", ""}},    //West Africa Time
-	"WEDT": {{"WEDT", "UTC+01", ""}},   //Western European Daylight Time
-	"WEST": {{"WEST", "UTC+01", ""}},   //Western European Summer Time
-	"WET":  {{"WET", "UTC", ""}},       //Western European Time
-	"WST":  {{"WST", "UTC+08", ""}},    //Western Standard Time
-	"YAKT": {{"YAKT", "UTC+09", ""}},   //Yakutsk Time
-	"YEKT": {{"YEKT", "UTC+05", ""}},   //Yekaterinburg Time
+	"ACDT": {{"ACDT", "+10:30", ""}}, //Australian Central Daylight Time
+	"ACST": {{"ACST", "+09:30", ""}}, //Australian Central Standard Time
+	"ACT":  {{"ACT", "+08", ""}},     //ASEAN Common Time
+	"ADT":  {{"ADT", "-03", ""}},     //Atlantic Daylight Time
+	"AEDT": {{"AEDT", "+11", ""}},    //Australian Eastern Daylight Time
+	"AEST": {{"AEST", "+10", ""}},    //Australian Eastern Standard Time
+	"AFT":  {{"AFT", "+04:30", ""}},  //Afghanistan Time
+	"AKDT": {{"AKDT", "-08", ""}},    //Alaska Daylight Time
+	"AKST": {{"AKST", "-09", ""}},    //Alaska Standard Time
+	"AMST": {{"AMST", "+05", ""}},    //Armenia Summer Time
+	"AMT":  {{"AMT", "+04", ""}},     //Armenia Time
+	"ART":  {{"ART", "-03", ""}},     //Argentina Time
+	"AST": {{"AST", "+03", ""}, //"Arab Standard Time (Kuwait, Riyadh)"
+		{"AST", "-04", ""}}, //Atlantic Standard Time
+	"AWDT":  {{"AWDT", "+09", ""}},  //Australian Western Daylight Time
+	"AWST":  {{"AWST", "+08", ""}},  //Australian Western Standard Time
+	"AZOST": {{"AZOST", "-01", ""}}, //Azores Standard Time
+	"AZT":   {{"AZT", "+04", ""}},   //Azerbaijan Time
+	"BDT":   {{"BDT", "+08", ""}},   //Brunei Time
+	"BIOT":  {{"BIOT", "+06", ""}},  //British Indian Ocean Time
+	"BIT":   {{"BIT", "-12", ""}},   //Baker Island Time
+	"BOT":   {{"BOT", "-04", ""}},   //Bolivia Time
+	"BRT":   {{"BRT", "-03", ""}},   //Brasilia Time
+	"BST": {{"BST", "+06", ""}, //Bangladesh Standard Time
+		{"BST", "+01", ""}}, //British Summer Time (British Standard Time from Feb 1968 to Oct 1971)
+	"BTT":   {{"BTT", "+06", ""}},      //Bhutan Time
+	"CAT":   {{"CAT", "+02", ""}},      //Central Africa Time
+	"CCT":   {{"CCT", "+06:30", ""}},   //Cocos Islands Time
+	"CDT":   {{"CDT", "-05", ""}},      //Central Daylight Time (North America)
+	"CEDT":  {{"CEDT", "+02", ""}},     //Central European Daylight Time
+	"CEST":  {{"CEST", "+02", ""}},     //Central European Summer Time (Cf. HAEC)
+	"CET":   {{"CET", "+01", ""}},      //Central European Time
+	"CHADT": {{"CHADT", "+13:45", ""}}, //Chatham Daylight Time
+	"CHAST": {{"CHAST", "+12:45", ""}}, //Chatham Standard Time
+	"CIST":  {{"CIST", "-08", ""}},     //Clipperton Island Standard Time
+	"CKT":   {{"CKT", "-10", ""}},      //Cook Island Time
+	"CLST":  {{"CLST", "-03", ""}},     //Chile Summer Time
+	"CLT":   {{"CLT", "-04", ""}},      //Chile Standard Time
+	"COST":  {{"COST", "-04", ""}},     //Colombia Summer Time
+	"COT":   {{"COT", "-05", ""}},      //Colombia Time
+	"CST": {{"CST", "-06", ""}, //Central Standard Time (North America)
+		{"CST", "+08", ""},       //China Standard Time
+		{"CST", "+09:30", "au"}}, //Central Standard Time (Australia)
+	"CT":   {{"CT", "+08", ""}},   //China Time
+	"CVT":  {{"CVT", "-01", ""}},  //Cape Verde Time
+	"CXT":  {{"CXT", "+07", ""}},  //Christmas Island Time
+	"CHST": {{"CHST", "+10", ""}}, //Chamorro Standard Time
+	"DFT":  {{"DFT", "+01", ""}},  //AIX specific equivalent of Central European Time
+	"EAST": {{"EAST", "-06", ""}}, //Easter Island Standard Time
+	"EAT":  {{"EAT", "+03", ""}},  //East Africa Time
+	"ECT": {{"ECT", "-04", ""}, //Eastern Caribbean Time (does not recognise DST)
+		{"ECT", "-05", ""}}, //Ecuador Time
+	"EDT":  {{"EDT", "-04", ""}},  //Eastern Daylight Time (North America)
+	"EEDT": {{"EEDT", "+03", ""}}, //Eastern European Daylight Time
+	"EEST": {{"EEST", "+03", ""}}, //Eastern European Summer Time
+	"EET":  {{"EET", "+02", ""}},  //Eastern European Time
+	"EST":  {{"EST", "-05", ""}},  //Eastern Standard Time (North America)
+	"FET":  {{"FET", "+03", ""}},  //Further-eastern_European_Time
+	"FJT":  {{"FJT", "+12", ""}},  //Fiji Time
+	"FKST": {{"FKST", "-03", ""}}, //Falkland Islands Summer Time
+	"FKT":  {{"FKT", "-04", ""}},  //Falkland Islands Time
+	"GALT": {{"GALT", "-06", ""}}, //Galapagos Time
+	"GET":  {{"GET", "+04", ""}},  //Georgia Standard Time
+	"GFT":  {{"GFT", "-03", ""}},  //French Guiana Time
+	"GILT": {{"GILT", "+12", ""}}, //Gilbert Island Time
+	"GIT":  {{"GIT", "-09", ""}},  //Gambier Island Time
+	"GMT":  {{"GMT", "Z", ""}},    //Greenwich Mean Time
+	"GST": {{"GST", "-02", ""}, //South Georgia and the South Sandwich Islands
+		{"GST", "+04", ""}}, //Gulf Standard Time
+	"GYT":  {{"GYT", "-04", ""}},     //Guyana Time
+	"HADT": {{"HADT", "-09", ""}},    //Hawaii-Aleutian Daylight Time
+	"HAEC": {{"HAEC", "+02", ""}},    //Heure Avancée d'Europe Centrale francised name for CEST
+	"HAST": {{"HAST", "-10", ""}},    //Hawaii-Aleutian Standard Time
+	"HKT":  {{"HKT", "+08", ""}},     //Hong Kong Time
+	"HMT":  {{"HMT", "+05", ""}},     //Heard and McDonald Islands Time
+	"HST":  {{"HST", "-10", ""}},     //Hawaii Standard Time
+	"ICT":  {{"ICT", "+07", ""}},     //Indochina Time
+	"IDT":  {{"IDT", "+03", ""}},     //Israeli Daylight Time
+	"IRKT": {{"IRKT", "+08", ""}},    //Irkutsk Time
+	"IRST": {{"IRST", "+03:30", ""}}, //Iran Standard Time
+	"IST": {{"IST", "+05:30", ""}, //Indian Standard Time
+		{"IST", "+01", "ie"}, //Irish Summer Time
+		{"IST", "+02", ""}},  //Israel Standard Time
+	"JST":  {{"JST", "+09", ""}},     //Japan Standard Time
+	"KRAT": {{"KRAT", "+07", ""}},    //Krasnoyarsk Time
+	"KST":  {{"KST", "+09", ""}},     //Korea Standard Time
+	"LHST": {{"LHST", "+10:30", ""}}, //Lord Howe Standard Time
+	"LINT": {{"LINT", "+14", ""}},    //Line Islands Time
+	"MAGT": {{"MAGT", "+11", ""}},    //Magadan Time
+	"MDT":  {{"MDT", "-06", ""}},     //Mountain Daylight Time (North America)
+	"MET":  {{"MET", "+01", ""}},     //Middle European Time Same zone as CET
+	"MEST": {{"MEST", "+02", ""}},    //Middle European Saving Time Same zone as CEST
+	"MIT":  {{"MIT", "-09:30", ""}},  //Marquesas Islands Time
+	"MSK":  {{"MSK", "+04", ""}},     //Moscow Time
+	"MST": {{"MST", "+08", ""}, //Malaysian Standard Time
+		{"MST", "-07", ""},     //Mountain Standard Time (North America)
+		{"MST", "+06:30", ""}}, //Myanmar Standard Time
+	"MUT":  {{"MUT", "+04", ""}},    //Mauritius Time
+	"MYT":  {{"MYT", "+08", ""}},    //Malaysia Time
+	"NDT":  {{"NDT", "-02:30", ""}}, //Newfoundland Daylight Time
+	"NFT":  {{"NFT", "+11:30", ""}}, //Norfolk Time[1]
+	"NPT":  {{"NPT", "+05:45", ""}}, //Nepal Time
+	"NST":  {{"NST", "-03:30", ""}}, //Newfoundland Standard Time
+	"NT":   {{"NT", "-03:30", ""}},  //Newfoundland Time
+	"NZDT": {{"NZDT", "+13", ""}},   //New Zealand Daylight Time
+	"NZST": {{"NZST", "+12", ""}},   //New Zealand Standard Time
+	"OMST": {{"OMST", "+06", ""}},   //Omsk Time
+	"PDT":  {{"PDT", "-07", ""}},    //Pacific Daylight Time (North America)
+	"PETT": {{"PETT", "+12", ""}},   //Kamchatka Time
+	"PHOT": {{"PHOT", "+13", ""}},   //Phoenix Island Time
+	"PKT":  {{"PKT", "+05", ""}},    //Pakistan Standard Time
+	"PST": {{"PST", "-08", ""}, //Pacific Standard Time (North America)
+		{"PST", "+08", ""}}, //Philippine Standard Time
+	"RET":  {{"RET", "+04", ""}},    //Réunion Time
+	"SAMT": {{"SAMT", "+04", ""}},   //Samara Time
+	"SAST": {{"SAST", "+02", ""}},   //South African Standard Time
+	"SBT":  {{"SBT", "+11", ""}},    //Solomon Islands Time
+	"SCT":  {{"SCT", "+04", ""}},    //Seychelles Time
+	"SGT":  {{"SGT", "+08", ""}},    //Singapore Time
+	"SLT":  {{"SLT", "+05:30", ""}}, //Sri Lanka Time
+	"SST": {{"SST", "-11", ""}, //Samoa Standard Time
+		{"SST", "+08", ""}}, //Singapore Standard Time
+	"TAHT": {{"TAHT", "-10", ""}},   //Tahiti Time
+	"THA":  {{"THA", "+07", ""}},    //Thailand Standard Time
+	"UTC":  {{"UTC", "Z", ""}},      //Coordinated Universal Time
+	"UYST": {{"UYST", "-02", ""}},   //Uruguay Summer Time
+	"UYT":  {{"UYT", "-03", ""}},    //Uruguay Standard Time
+	"VET":  {{"VET", "-04:30", ""}}, //Venezuelan Standard Time
+	"VLAT": {{"VLAT", "+10", ""}},   //Vladivostok Time
+	"WAT":  {{"WAT", "+01", ""}},    //West Africa Time
+	"WEDT": {{"WEDT", "+01", ""}},   //Western European Daylight Time
+	"WEST": {{"WEST", "+01", ""}},   //Western European Summer Time
+	"WET":  {{"WET", "Z", ""}},      //Western European Time
+	"WST":  {{"WST", "+08", ""}},    //Western Standard Time
+	"YAKT": {{"YAKT", "+09", ""}},   //Yakutsk Time
+	"YEKT": {{"YEKT", "+05", ""}},   //Yekaterinburg Time
+}
+
+// parse a timezone of ISO8601 form or common timezone abbreviation
+func parseTZ(s string) (int, error) {
+	s = strings.ToUpper(s)
+	matches, got := tzTable[s]
+	if !got {
+		return tzToOffset(s)
+	}
+	if len(matches) > 1 {
+		return 0, errors.New("ambiguous timezone")
+	}
+	return tzToOffset(matches[0].Offset)
+}
+
+func offsetToTZ(secs int) string {
+	if secs == 0 {
+		return "Z"
+	}
+	sign := '+'
+	if secs < 0 {
+		sign = '-'
+		secs = -secs
+	}
+	mins := (secs / 60) % 60
+	hours := secs / (60 * 60)
+	return fmt.Sprintf("%c%02d:%02d", sign, hours, mins)
+}
+
+var isoTZRE = regexp.MustCompile(`([-+])(\d{2})(?:[:]?(\d{2}))?`)
+
+// parse an ISO8601 timezone offset ("Z", "[+-]HH" "[+-]HH[:]?MM" etc...)
+// and return the offset in seconds
+func tzToOffset(s string) (int, error) {
+	if s == "Z" {
+		return 0, nil
+	}
+	m := isoTZRE.FindStringSubmatch(s)
+	if m == nil {
+		return 0, errors.New("bad timezone")
+	}
+
+	var hours, mins int
+	hours, err := strconv.Atoi(m[2])
+	if err != nil {
+		return 0, err
+	}
+	// has mins?
+	if m[3] != "" {
+		mins, err = strconv.Atoi(m[3])
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	switch m[1] {
+	case "+":
+		return 60*60*hours + 60*mins, nil
+	case "-":
+		return -((60 * 60 * hours) + (60 * mins)), nil
+	}
+
+	return 0, errors.New("bad timezone")
 }

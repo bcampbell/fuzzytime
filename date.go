@@ -1,7 +1,6 @@
 package fuzzytime
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -79,22 +78,22 @@ func (d *Date) String() string {
 	return year + "-" + month + "-" + day
 }
 
-// IsoFormat returns "YYYY-MM-DD", "YYYY-MM" or "YYYY" depending on which
-// fields are available (or error if no sensible values).
-func (d *Date) IsoFormat() (string, error) {
+// ISOFormat returns "YYYY-MM-DD", "YYYY-MM" or "YYYY" depending on which
+// fields are available (or "" if year is missing).
+func (d *Date) ISOFormat() string {
 	if d.HasYear() {
 		if d.HasMonth() {
 			if d.HasDay() {
-				return fmt.Sprintf("%04d-%02d-%02d", d.Year(), d.Month(), d.Day()), nil
+				return fmt.Sprintf("%04d-%02d-%02d", d.Year(), d.Month(), d.Day())
 			} else {
 
-				return fmt.Sprintf("%04d-%02d", d.Year(), d.Month()), nil
+				return fmt.Sprintf("%04d-%02d", d.Year(), d.Month())
 			}
 		} else {
-			return fmt.Sprintf("%04d", d.Year()), nil
+			return fmt.Sprintf("%04d", d.Year())
 		}
 	}
-	return "", errors.New("date is missing year")
+	return ""
 }
 
 // NewDate creates a Date with all fields set
@@ -136,30 +135,28 @@ var dateCrackers = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)(?P<day>\d{1,2})[/.-](?P<month>\d{1,2})[/.-](?P<year>\d{4})`),
 	// "09-Apr-2007", "09-Apr-07"
 	regexp.MustCompile(`(?i)(?P<day>\d{1,2})-(?P<month>\w{3,})-(?P<year>(\d{4})|(\d{2}))`),
+
+	// "May 2011"
+	regexp.MustCompile(`(?i)(?P<month>\w{3,})\s+(?P<year>\d{4})`),
+	/*
+	   Ambiguous formats...
+	   # dd-mm-yy
+	   r'(?P<day>\d{1,2})-(?P<month>\d{1,2})-(?P<year>\d{2})',
+	   # dd/mm/yy
+	   r'(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{2})',
+	   # dd.mm.yy
+	   r'(?P<day>\d{1,2})[.](?P<month>\d{1,2})[.](?P<year>\d{2})',
+
+	   also others, eg:  japan uses yy/mm/dd
+
+	   # TODO:
+	   # year/month only
+
+	   # "May/June 2011" (common for publications) - just use second month
+	   r'(?P<cruftmonth>\w{3,})/(?P<month>\w{3,})\s+(?P<year>\d{4})',
+	*/
+
 }
-
-/*
-    Ambiguous formats...
-    # dd-mm-yy
-    r'(?P<day>\d{1,2})-(?P<month>\d{1,2})-(?P<year>\d{2})',
-    # dd/mm/yy
-    r'(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{2})',
-    # dd.mm.yy
-    r'(?P<day>\d{1,2})[.](?P<month>\d{1,2})[.](?P<year>\d{2})',
-
-    also others, eg:  japan uses yy/mm/dd
-
-    # TODO:
-    # year/month only
-
-    # "May/June 2011" (common for publications) - just use second month
-    r'(?P<cruftmonth>\w{3,})/(?P<month>\w{3,})\s+(?P<year>\d{4})',
-
-    # "May 2011"
-    r'(?P<month>\w{3,})\s+(?P<year>\d{4})',
-]
-
-*/
 
 // ExtractDate tries to parse a date from a string.
 // It returns a Date and Span indicating which part of string matched.
@@ -226,7 +223,7 @@ func ExtractDate(s string) (fd Date, span Span) {
 		}
 
 		// got enough?
-		if fd.HasYear() && fd.HasMonth() && fd.HasDay() {
+		if fd.HasYear() && fd.HasMonth() {
 			span.Begin, span.End = matchSpans[0], matchSpans[1]
 			return
 		}

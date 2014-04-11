@@ -24,27 +24,15 @@ func (dt *DateTime) Empty() bool {
 	return dt.Time.Empty() && dt.Date.Empty()
 }
 
-// IsoFormat returns "YYYY-MM-DDTHH:MM:SS+TZ" if both date and time defined,
-// or just "YYYY-MM-DD" if only date defined.
-// returns an error if any part of date is missing, or if time is non-empty,
-// but missing hours or minutes (seconds will be assumed to be zero if unset)
-func (dt *DateTime) IsoFormat() (string, error) {
-	d, derr := dt.Date.IsoFormat()
-	if derr != nil {
-		return "", derr
-	}
-
+// ISOFormat returns the most precise-possible datetime
+// aims for "YYYY-MM-DDTHH:MM:SS+TZ" but will drop off
+// higher-precision components as required eg "YYYY-MM"
+func (dt *DateTime) ISOFormat() string {
 	if dt.Time.Empty() {
 		// just the date.
-		return d, derr
+		return dt.Date.ISOFormat()
 	}
-
-	t, terr := dt.Time.IsoFormat()
-	if terr != nil {
-		return "", terr
-	}
-
-	return d + "T" + t, nil
+	return dt.Date.ISOFormat() + "T" + dt.Time.ISOFormat()
 }
 
 // FullDate returns true if Year, Month and Day are all set

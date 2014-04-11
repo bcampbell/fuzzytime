@@ -5,6 +5,9 @@ package fuzzytime
 // TODO: look into CLDR - http://cldr.unicode.org/index
 //       provides locale-specific names and format patterns
 
+// useful reference for month abbreviations:
+// http://library.princeton.edu/departments/tsd/katmandu/reference/months.html
+
 /*
 dayLookup = {
     'mon': 'mon', 'monday': 'mon',
@@ -77,7 +80,7 @@ var monthLookup = map[string]int{
 	// "11":11,
 	// "12":12,
 
-	// es
+	// es - full
 	"enero":      1,
 	"febrero":    2,
 	"marzo":      3,
@@ -90,4 +93,19 @@ var monthLookup = map[string]int{
 	"octubre":    10,
 	"noviembre":  11,
 	"diciembre":  12,
+
+	// es - abbreviations
+	//"enero": 1,
+	//	"feb":    2,
+	//"marzo": 3,
+	"abr": 4,
+	//"mayo":  5,
+	//	"jun":    6,
+	//	"jul":    7,
+	//"agosto": 8,
+	//	"sept":   9,
+	"set": 9,
+	//	"oct":    10,
+	//	"nov":    11,
+	"dic": 12,
 }
