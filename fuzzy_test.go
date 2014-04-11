@@ -64,11 +64,23 @@ func TestDateTimes(t *testing.T) {
 		//{"2:43pm BST 16/04/2007", "2007-04-16T14:43+01:00"},         //(telegraph, after munging)
 		//{"Monday 30 July 2012 08.38 BST", *"2012-7-30T8:38:0+01:00")}, // (guardian.co.uk)
 
-		// TODO: should fail due to ambiguity
-		{"03/09/2007", "2007-09-03"}, //(Sky News blogs, mirror)
-
 		// NOTE: this is a tricky one where hour can get picked up as year if not careful!
 		{"Thu Aug 25 10:46:55 GMT 2011", "2011-08-25T10:46:55Z"}, // (www.yorkshireeveningpost.co.uk)
+
+		// Other possible formats to support:
+		// http://en.wikipedia.org/wiki/Date_and_time_notation_in_the_United_States#Date-time_group
+		//{"091630Z JUL 11", "2011-07T09:16:30Z"
+
+		// Ones that should fail
+
+		// time or date?
+		{"10.12", ""},
+		// ambiguous (at least with the default date resolver)
+		{"03/09/2007", ""}, //(Sky News blogs, mirror)
+		{"03/09/12", ""},
+
+		// ambiguous format, but with values that provide enough info
+		// {"25/11/2004","2004-11-25"}
 	}
 
 	for _, dat := range testData {
@@ -83,27 +95,21 @@ func TestDateTimes(t *testing.T) {
 
 }
 
-// Test the parsing of ISO8601 timezone offsets
-func TestParseTZ(t *testing.T) {
-
-	testData := []struct {
-		in       string
-		expected int
-	}{
-		{"Z", 0},
-		{"+0100", 1 * 60 * 60},
-		{"-0430", -(4*60*60 + 30*60)},
-		{"NZDT", 13 * 60 * 60},
-	}
-
-	for _, dat := range testData {
-		got, err := parseTZ(dat.in)
-		if err != nil {
-			t.Errorf("parseTZ(%s) failed: %s", dat.in, err)
-		} else if got != dat.expected {
-			t.Errorf("parseTZ(%s): expected %d, but got %d", dat.in, dat.expected, got)
+// Test timezone parsing
+func TestParseTimeZone(t *testing.T) {
+	/*
+		testData := []struct {
+			in       string
+			expected int
+		}{
+			{"Z", 0},
+			{"+0100", 1 * 60 * 60},
+			{"-0430", -(4*60*60 + 30*60)},
+			{"NZDT", 13 * 60 * 60},
 		}
-	}
+
+		// TODO
+	*/
 }
 
 func TestTZToOffset(t *testing.T) {
@@ -119,11 +125,11 @@ func TestTZToOffset(t *testing.T) {
 		{"-01:35", -(1*60*60 + 35*60)},
 	}
 	for _, dat := range testData {
-		got, err := tzToOffset(dat.in)
+		got, err := TZToOffset(dat.in)
 		if err != nil {
-			t.Errorf("tzToOffset(%s) error: %s", dat.in, err)
+			t.Errorf("TZToOffset(%s) error: %s", dat.in, err)
 		} else if got != dat.expected {
-			t.Errorf("tzToOffset(%s): expected '%d' but got '%d'", dat.in, dat.expected, got)
+			t.Errorf("TZToOffset(%s): expected '%d' but got '%d'", dat.in, dat.expected, got)
 		}
 	}
 }
@@ -141,9 +147,9 @@ func TestOffsetToTZ(t *testing.T) {
 		{-((10 * 60 * 60) + (15 * 60)), "-10:15"},
 	}
 	for _, dat := range testData {
-		got := offsetToTZ(dat.in)
+		got := OffsetToTZ(dat.in)
 		if got != dat.expected {
-			t.Errorf("offsetToTZ(%d): expected '%s' but got '%s'", dat.in, dat.expected, got)
+			t.Errorf("OffsetToTZ(%d): expected '%s' but got '%s'", dat.in, dat.expected, got)
 		}
 	}
 }

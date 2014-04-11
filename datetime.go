@@ -1,8 +1,7 @@
 package fuzzytime
 
-//  DateTime represents a set of fields for date and time, any of which may
-// be unset. The default initialisation (ie DateTime{}) produces an empty
-// DateTime (that is, with all fields unset)
+// DateTime represents a set of fields for date and time, any of which may
+// be unset. The default initialisation is an empty with all fields unset
 type DateTime struct {
 	Date
 	Time

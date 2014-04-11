@@ -2,7 +2,6 @@ package fuzzytime
 
 import (
 	"errors"
-	"time"
 )
 
 // Span represents the range [Begin,End)
@@ -11,9 +10,42 @@ type Span struct {
 	End   int
 }
 
-// TODO: return sensible span(s)!
-func Extract(s string) DateTime {
-	ft, span := ExtractTime(s)
+var DefaultContext Context = Context{
+	DateResolver: func(a, b, c int) (Date, error) {
+		return Date{}, errors.New("ambiguous date")
+	},
+	TZResolver: func(name string) (int, error) {
+		// conservative resolver - reject ambiguous names
+		matches := FindTimeZone(name)
+		if len(matches) == 1 {
+			return TZToOffset(matches[0].Offset)
+		} else if len(matches) > 1 {
+			return 0, errors.New("ambiguous timezone")
+		} else {
+			return 0, errors.New("unknown timezone")
+		}
+	},
+}
+
+//TODO:
+// EuroCentricContext
+// USCentricContext
+
+func Extract(s string) DateTime         { return DefaultContext.Extract(s) }
+func ExtractTime(s string) (Time, Span) { return DefaultContext.ExtractTime(s) }
+func ExtractDate(s string) (Date, Span) { return DefaultContext.ExtractDate(s) }
+
+// Context to help resolve ambiguous dates and timezones
+type Context struct {
+	// DateResolver is called when ambigous dates are encountered eg (10/11/12)
+	// it should return a date or an error
+	DateResolver func(a, b, c int) (Date, error)
+	//TZResolver returns the offset in seconds from UTC of the named zone (eg "EST").
+	TZResolver func(name string) (int, error)
+}
+
+func (ctx *Context) Extract(s string) DateTime {
+	ft, span := ctx.ExtractTime(s)
 	if !ft.Empty() {
 		// snip the matched time out of the string
 		// (hack for nasty case where an hour can look like a 2-digit year)
@@ -25,22 +57,8 @@ func Extract(s string) DateTime {
 	return DateTime{fd, ft}
 }
 
-func Parse(s string) (time.Time, error) {
-	ft, span := ExtractTime(s)
-	if !ft.Empty() {
-		// snip the matched time out of the string
-		s = s[:span.Begin] + s[span.End:]
-	}
-
-	fd, _ := ExtractDate(s)
-
-	if !fd.Empty() {
-		if !ft.Empty() {
-			return time.Date(fd.Year(), time.Month(fd.Month()), fd.Day(), ft.Hour(), ft.Minute(), ft.Second(), 0, time.UTC), nil
-		} else {
-			// ok if time missing
-			return time.Date(fd.Year(), time.Month(fd.Month()), fd.Day(), 0, 0, 0, 0, time.UTC), nil
-		}
-	}
-	return time.Time{}, errors.New("no date found")
-}
+// DefaultResolveTimeZone returns the offset of the named timezone.
+// If the name is unknown or if there are multiple zones of that
+// name then an error is returned.
+// Note that some very common timezone names (eg EST, BST) are ambiguous
+// This is the function used by DefaultContext

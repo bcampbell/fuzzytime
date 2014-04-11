@@ -8,17 +8,18 @@ import (
 	"strings"
 )
 
-type TZ struct {
-	Name   string
+// TZInfo holds info about a timezone offset
+type TZInfo struct {
+	Name   string // eg "BST", "UTC", "NZDT"
 	Offset string // ISO8601 timezone [+-]<HH>[:<MM>]
-	Locale string // TODO: locale identifiers to help resolve ambiguities?
+	Locale string // TODO: locale identifiers to help resolve ambiguities? should be a list perhaps?
 }
 
 // lookup table of common abbreviations of timezones
 // source: http://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
 //
 // Note that the names are not unambiguous... (eg BST: Britain or Bangladesh?)
-var tzTable = map[string][]TZ{
+var tzTable = map[string][]TZInfo{
 	"ACDT": {{"ACDT", "+10:30", ""}}, //Australian Central Daylight Time
 	"ACST": {{"ACST", "+09:30", ""}}, //Australian Central Standard Time
 	"ACT":  {{"ACT", "+08", ""}},     //ASEAN Common Time
@@ -157,20 +158,8 @@ var tzTable = map[string][]TZ{
 	"YEKT": {{"YEKT", "+05", ""}},   //Yekaterinburg Time
 }
 
-// parse a timezone of ISO8601 form or common timezone abbreviation
-func parseTZ(s string) (int, error) {
-	s = strings.ToUpper(s)
-	matches, got := tzTable[s]
-	if !got {
-		return tzToOffset(s)
-	}
-	if len(matches) > 1 {
-		return 0, errors.New("ambiguous timezone")
-	}
-	return tzToOffset(matches[0].Offset)
-}
-
-func offsetToTZ(secs int) string {
+// OffsetToTZ converts an offset in seconds from UTC into an ISO8601-style offset
+func OffsetToTZ(secs int) string {
 	if secs == 0 {
 		return "Z"
 	}
@@ -186,9 +175,9 @@ func offsetToTZ(secs int) string {
 
 var isoTZRE = regexp.MustCompile(`([-+])(\d{2})(?:[:]?(\d{2}))?`)
 
-// parse an ISO8601 timezone offset ("Z", "[+-]HH" "[+-]HH[:]?MM" etc...)
-// and return the offset in seconds
-func tzToOffset(s string) (int, error) {
+// TZToOffset parses an ISO8601 timezone offset ("Z", "[+-]HH" "[+-]HH[:]?MM" etc...)
+// and returns the offset from UTC in seconds
+func TZToOffset(s string) (int, error) {
 	if s == "Z" {
 		return 0, nil
 	}
@@ -218,4 +207,14 @@ func tzToOffset(s string) (int, error) {
 	}
 
 	return 0, errors.New("bad timezone")
+}
+
+// FindTimeZone returns timezones with the matching name (eg "BST")
+func FindTimeZone(name string) []TZInfo {
+	name = strings.ToUpper(name)
+	matches, got := tzTable[name]
+	if got {
+		return matches
+	}
+	return []TZInfo{}
 }
