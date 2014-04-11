@@ -79,14 +79,22 @@ func (d *Date) String() string {
 	return year + "-" + month + "-" + day
 }
 
-// IsoFormat returns "YYYY-MM-DD" (or error if fields missing)
+// IsoFormat returns "YYYY-MM-DD", "YYYY-MM" or "YYYY" depending on which
+// fields are available (or error if no sensible values).
 func (d *Date) IsoFormat() (string, error) {
-	// require full date
-	if !(d.HasYear() && d.HasMonth() && d.HasDay()) {
-		return "", errors.New("date information missing")
-	}
+	if d.HasYear() {
+		if d.HasMonth() {
+			if d.HasDay() {
+				return fmt.Sprintf("%04d-%02d-%02d", d.Year(), d.Month(), d.Day()), nil
+			} else {
 
-	return fmt.Sprintf("%04d-%02d-%02d", d.Year(), d.Month(), d.Day()), nil
+				return fmt.Sprintf("%04d-%02d", d.Year(), d.Month()), nil
+			}
+		} else {
+			return fmt.Sprintf("%04d", d.Year()), nil
+		}
+	}
+	return "", errors.New("date is missing year")
 }
 
 // NewDate creates a Date with all fields set

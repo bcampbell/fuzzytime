@@ -111,22 +111,28 @@ func (t *Time) Empty() bool {
 // At least hours and minutes must be set for this to work - seconds will
 // be assumed to be zero.
 func (t *Time) IsoFormat() (string, error) {
-	if !t.HasHour() || !t.HasMinute() {
-		return "", errors.New("missing time info")
+	var out string
+	if t.HasHour() {
+		if t.HasMinute() {
+			if t.HasSecond() {
+				out = fmt.Sprintf("%02d:%02d:%02d", t.Hour(), t.Minute(), t.Second())
+			} else {
+				out = fmt.Sprintf("%02d:%02d", t.Hour(), t.Minute())
+			}
+		} else {
+			out = fmt.Sprintf("%02d", t.Hour())
+		}
+	} else {
+		return "", errors.New("time is missing hour")
 	}
-
-	// allow missing seconds
-	if !t.HasSecond() {
-		t.SetSecond(0)
-	}
-
-	//
-	var tzpart = ""
-	if t.HasTZ() {
-		// TODO: convert to UTC offset or Z
-		tzpart = t.TZ()
-	}
-	return fmt.Sprintf("%02d:%02d:%02d%s", t.Hour(), t.Minute(), t.Second(), tzpart), nil
+	/*
+		//
+		if t.HasTZ() {
+			// TODO: convert to UTC offset or Z
+			tzpart = t.TZ()
+		}
+	*/
+	return out, nil
 }
 
 // match one of:
