@@ -31,14 +31,17 @@ var timeCrackers = []*regexp.Regexp{
 	// "12.33"
 	// "14:21"
 	// TODO: BUG: this'll also pick up time from "30.11.2011"!
-	regexp.MustCompile(`(?i)(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*`),
+	regexp.MustCompile(`(?i)\b(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*`),
 
 	// TODO: add support for microseconds?
 }
 
 // ExtractTime tries to parse a time from a string.
-// It returns a Time and a Span indicating which part of string matched
-func (ctx *Context) ExtractTime(s string) (Time, Span) {
+// It returns a Time and a Span indicating which part of string matched.
+// Time and Span may be empty, indicating no time was found.
+// An error will be returned if a time is found but cannot be correctly parsed.
+// If error is not nil time the returned time and span will both be empty
+func (ctx *Context) ExtractTime(s string) (Time, Span, error) {
 	for _, pat := range timeCrackers {
 		names := pat.SubexpNames()
 		matchSpans := pat.FindStringSubmatchIndex(s)
@@ -85,7 +88,7 @@ func (ctx *Context) ExtractTime(s string) (Time, Span) {
 			case "tz":
 				offset, err := ctx.parseTZ(sub)
 				if err != nil {
-					break
+					return Time{}, Span{}, err
 				}
 				tzOffset = offset
 				gotTZ = true
@@ -111,12 +114,12 @@ func (ctx *Context) ExtractTime(s string) (Time, Span) {
 				ft.SetTZOffset(tzOffset)
 			}
 			var span = Span{matchSpans[0], matchSpans[1]}
-			return ft, span
+			return ft, span, nil
 		}
 	}
 
 	// nothing. Just return an empty time and span
-	return Time{}, Span{}
+	return Time{}, Span{}, nil
 }
 
 func (ctx *Context) parseTZ(s string) (int, error) {

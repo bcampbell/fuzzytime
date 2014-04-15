@@ -24,7 +24,6 @@ func TestDateTimes(t *testing.T) {
 		{"Mar 3, 2007 12:00 AM", "2007-03-03T00:00"},
 		{"Jul 21, 08 10:00 AM", "2008-07-21T10:00"},                   //(mirror blogs)
 		{"09-Apr-2007 00:00", "2007-04-09T00:00"},                     //(times, sundaytimes)
-		{"4:48PM GMT 22/02/2008", "2008-02-22T16:48Z"},                //(telegraph html articles)
 		{"09-Apr-07 00:00", "2007-04-09T00:00"},                       //(scotsman)
 		{"Friday    August    11, 2006", "2006-08-11"},                //(express, guardian/observer)
 		{"20:12pm 23rd November 2007", "2007-11-23T20:12"},            //(dailymail)
@@ -85,14 +84,48 @@ func TestDateTimes(t *testing.T) {
 
 	for _, dat := range testData {
 		dt := Extract(dat.in)
-
 		got := dt.ISOFormat()
-
 		if got != dat.expected {
 			t.Errorf("Extract(%s): expected %s, but got %s", dat.in, dat.expected, got)
 		}
 	}
 
+}
+
+func TestAmbiguous(t *testing.T) {
+	usaData := []struct {
+		in       string
+		expected string
+	}{
+		{"2003-02-01", "2003-02-01"}, // for sanity check
+		{"2/3/10", "2010-02-03"},
+		{"1/2/2003", "2003-01-02"},
+		// TODO: add some US timezone tests
+	}
+	for _, dat := range usaData {
+		dt := USContext.Extract(dat.in)
+		got := dt.ISOFormat()
+		if got != dat.expected {
+			t.Errorf("Extract(%s): expected %s, but got %s", dat.in, dat.expected, got)
+		}
+	}
+
+	ukData := []struct {
+		in       string
+		expected string
+	}{
+		{"2003-02-01", "2003-02-01"}, // for sanity check
+		{"1/2/03", "2003-02-01"},
+		{"4:48PM GMT 22/02/2008", "2008-02-22T16:48Z"},
+		{"4:48PM BST 22/02/2008", "2008-02-22T16:48+01:00"},
+	}
+	for _, dat := range ukData {
+		dt := WesternContext.Extract(dat.in)
+		got := dt.ISOFormat()
+		if got != dat.expected {
+			t.Errorf("Extract(%s): expected %s, but got %s", dat.in, dat.expected, got)
+		}
+	}
 }
 
 // Test timezone parsing
@@ -152,4 +185,27 @@ func TestOffsetToTZ(t *testing.T) {
 			t.Errorf("OffsetToTZ(%d): expected '%s' but got '%s'", dat.in, dat.expected, got)
 		}
 	}
+}
+
+func TestTZ(t *testing.T) {
+	testData := []struct {
+		in        string
+		preferred string // preferred local(es)
+		expected  int
+	}{
+		{"BST", "GB", (1 * 60 * 60)},
+		{"PST", "GB,MX", -(8 * 60 * 60)},
+		{"IST", "IL,IE", (2 * 60 * 60)}, // prefer israel standard time over irish summer time
+	}
+	for _, dat := range testData {
+		tzResolver := DefaultTZResolver(dat.preferred)
+
+		got, err := tzResolver(dat.in)
+		if err != nil {
+			t.Errorf("tz resolver (%s, %s) error: %s", dat.in, dat.preferred, err)
+		} else if got != dat.expected {
+			t.Errorf("tz resolver(%s, %s): expected '%d' but got '%d'", dat.in, dat.preferred, dat.expected, got)
+		}
+	}
+
 }

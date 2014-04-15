@@ -61,9 +61,26 @@ var dateCrackers = []*regexp.Regexp{
 
 }
 
+// ExtendYear extends 2-digit years into 4 digits.
+// the rules used:
+// 00-69 => 2000-2069
+// 70-99 => 1970-1999
+func ExtendYear(year int) int {
+	if year < 70 {
+		return 2000 + year
+	}
+	if year < 100 {
+		return 1900 + year
+	}
+	return year
+}
+
 // ExtractDate tries to parse a date from a string.
 // It returns a Date and Span indicating which part of string matched.
-func (ctx *Context) ExtractDate(s string) (fd Date, span Span) {
+func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
+
+	fd := Date{}
+	span := Span{}
 
 	for _, pat := range dateCrackers {
 		names := pat.SubexpNames()
@@ -83,9 +100,7 @@ func (ctx *Context) ExtractDate(s string) (fd Date, span Span) {
 			case "year":
 				year, e := strconv.Atoi(sub)
 				if e == nil {
-					if year < 100 {
-						year += 2000
-					}
+					year = ExtendYear(year)
 					fd.SetYear(year)
 				} else {
 					break
@@ -135,7 +150,7 @@ func (ctx *Context) ExtractDate(s string) (fd Date, span Span) {
 		// got enough?
 		if fd.HasYear() && fd.HasMonth() {
 			span.Begin, span.End = matchSpans[0], matchSpans[1]
-			return
+			return fd, span, nil
 		} else {
 			// got some ambiguous components to try?
 			if len(unknowns) == 2 && fd.HasYear() {
@@ -145,21 +160,18 @@ func (ctx *Context) ExtractDate(s string) (fd Date, span Span) {
 				var err error
 				fd, err = ctx.DateResolver(unknowns[0], unknowns[1], unknowns[2])
 				if err != nil {
-					// TODO: should return error
-					break
+					return Date{}, Span{}, err
 				}
 
 				if fd.HasYear() && fd.HasMonth() && fd.HasYear() {
 					// resolved.
 					span.Begin, span.End = matchSpans[0], matchSpans[1]
-					return
+					return fd, span, nil
 				}
 			}
 		}
 	}
 
 	// nothing. Just return an empty date and span
-	fd = Date{}
-	span = Span{}
-	return
+	return Date{}, Span{}, nil
 }

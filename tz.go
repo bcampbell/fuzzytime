@@ -12,7 +12,7 @@ import (
 type TZInfo struct {
 	Name   string // eg "BST", "UTC", "NZDT"
 	Offset string // ISO8601 timezone [+-]<HH>[:<MM>]
-	Locale string // TODO: locale identifiers to help resolve ambiguities? should be a list perhaps?
+	Locale string // locale identifiers to help resolve ambiguities
 }
 
 // lookup table of common abbreviations of timezones
@@ -32,8 +32,8 @@ var tzTable = map[string][]TZInfo{
 	"AMST": {{"AMST", "+05", ""}},    //Armenia Summer Time
 	"AMT":  {{"AMT", "+04", ""}},     //Armenia Time
 	"ART":  {{"ART", "-03", ""}},     //Argentina Time
-	"AST": {{"AST", "+03", ""}, //"Arab Standard Time (Kuwait, Riyadh)"
-		{"AST", "-04", ""}}, //Atlantic Standard Time
+	"AST": {{"AST", "+03", "BH,IQ,JO,KW,SA,YE,QA"}, //"Arab Standard Time (Kuwait, Riyadh)"
+		{"AST", "-04", "AW,BB,BM,VG,CA,CW,DO,GD,SX,TT,PR,VI"}}, //Atlantic Standard Time (https://en.wikipedia.org/wiki/Atlantic_Standard_Time_Zone)
 	"AWDT":  {{"AWDT", "+09", ""}},  //Australian Western Daylight Time
 	"AWST":  {{"AWST", "+08", ""}},  //Australian Western Standard Time
 	"AZOST": {{"AZOST", "-01", ""}}, //Azores Standard Time
@@ -43,8 +43,8 @@ var tzTable = map[string][]TZInfo{
 	"BIT":   {{"BIT", "-12", ""}},   //Baker Island Time
 	"BOT":   {{"BOT", "-04", ""}},   //Bolivia Time
 	"BRT":   {{"BRT", "-03", ""}},   //Brasilia Time
-	"BST": {{"BST", "+06", ""}, //Bangladesh Standard Time
-		{"BST", "+01", ""}}, //British Summer Time (British Standard Time from Feb 1968 to Oct 1971)
+	"BST": {{"BST", "+06", "BD"}, //Bangladesh Standard Time
+		{"BST", "+01", "GB"}}, //British Summer Time (British Standard Time from Feb 1968 to Oct 1971)
 	"BTT":   {{"BTT", "+06", ""}},      //Bhutan Time
 	"CAT":   {{"CAT", "+02", ""}},      //Central Africa Time
 	"CCT":   {{"CCT", "+06:30", ""}},   //Cocos Islands Time
@@ -60,9 +60,9 @@ var tzTable = map[string][]TZInfo{
 	"CLT":   {{"CLT", "-04", ""}},      //Chile Standard Time
 	"COST":  {{"COST", "-04", ""}},     //Colombia Summer Time
 	"COT":   {{"COT", "-05", ""}},      //Colombia Time
-	"CST": {{"CST", "-06", ""}, //Central Standard Time (North America)
-		{"CST", "+08", ""},       //China Standard Time
-		{"CST", "+09:30", "au"}}, //Central Standard Time (Australia)
+	"CST": {{"CST", "-06", "US,CA,JM,BZ,MX"}, //Central Standard Time (North America)
+		{"CST", "+08", "CN,HK,MO,TW"}, //China Standard Time
+		{"CST", "+09:30", "AU"}},      //Central Standard Time (Australia)
 	"CT":   {{"CT", "+08", ""}},   //China Time
 	"CVT":  {{"CVT", "-01", ""}},  //Cape Verde Time
 	"CXT":  {{"CXT", "+07", ""}},  //Christmas Island Time
@@ -70,8 +70,8 @@ var tzTable = map[string][]TZInfo{
 	"DFT":  {{"DFT", "+01", ""}},  //AIX specific equivalent of Central European Time
 	"EAST": {{"EAST", "-06", ""}}, //Easter Island Standard Time
 	"EAT":  {{"EAT", "+03", ""}},  //East Africa Time
-	"ECT": {{"ECT", "-04", ""}, //Eastern Caribbean Time (does not recognise DST)
-		{"ECT", "-05", ""}}, //Ecuador Time
+	"ECT": {{"ECT", "-04", "AI,AG,BB,DM,GD,MS,KN,LC,VC,TT,VG,JM"}, //Eastern Caribbean Time (does not recognise DST)
+		{"ECT", "-05", "EC"}}, //Ecuador Time
 	"EDT":  {{"EDT", "-04", ""}},  //Eastern Daylight Time (North America)
 	"EEDT": {{"EEDT", "+03", ""}}, //Eastern European Daylight Time
 	"EEST": {{"EEST", "+03", ""}}, //Eastern European Summer Time
@@ -87,8 +87,8 @@ var tzTable = map[string][]TZInfo{
 	"GILT": {{"GILT", "+12", ""}}, //Gilbert Island Time
 	"GIT":  {{"GIT", "-09", ""}},  //Gambier Island Time
 	"GMT":  {{"GMT", "Z", ""}},    //Greenwich Mean Time
-	"GST": {{"GST", "-02", ""}, //South Georgia and the South Sandwich Islands
-		{"GST", "+04", ""}}, //Gulf Standard Time
+	"GST": {{"GST", "-02", "GS"}, //South Georgia and the South Sandwich Islands
+		{"GST", "+04", "AE,OM"}}, //Gulf Standard Time
 	"GYT":  {{"GYT", "-04", ""}},     //Guyana Time
 	"HADT": {{"HADT", "-09", ""}},    //Hawaii-Aleutian Daylight Time
 	"HAEC": {{"HAEC", "+02", ""}},    //Heure Avancée d'Europe Centrale francised name for CEST
@@ -100,9 +100,9 @@ var tzTable = map[string][]TZInfo{
 	"IDT":  {{"IDT", "+03", ""}},     //Israeli Daylight Time
 	"IRKT": {{"IRKT", "+08", ""}},    //Irkutsk Time
 	"IRST": {{"IRST", "+03:30", ""}}, //Iran Standard Time
-	"IST": {{"IST", "+05:30", ""}, //Indian Standard Time
-		{"IST", "+01", "ie"}, //Irish Summer Time
-		{"IST", "+02", ""}},  //Israel Standard Time
+	"IST": {{"IST", "+05:30", "IN,LK"}, //Indian Standard Time
+		{"IST", "+01", "IE"},  //Irish Summer Time
+		{"IST", "+02", "IL"}}, //Israel Standard Time
 	"JST":  {{"JST", "+09", ""}},     //Japan Standard Time
 	"KRAT": {{"KRAT", "+07", ""}},    //Krasnoyarsk Time
 	"KST":  {{"KST", "+09", ""}},     //Korea Standard Time
@@ -114,9 +114,9 @@ var tzTable = map[string][]TZInfo{
 	"MEST": {{"MEST", "+02", ""}},    //Middle European Saving Time Same zone as CEST
 	"MIT":  {{"MIT", "-09:30", ""}},  //Marquesas Islands Time
 	"MSK":  {{"MSK", "+04", ""}},     //Moscow Time
-	"MST": {{"MST", "+08", ""}, //Malaysian Standard Time
-		{"MST", "-07", ""},     //Mountain Standard Time (North America)
-		{"MST", "+06:30", ""}}, //Myanmar Standard Time
+	"MST": {{"MST", "+08", "MY"}, //Malaysian Standard Time
+		{"MST", "-07", "CA,MX,US"}, //Mountain Standard Time (North America)
+		{"MST", "+06:30", "MM"}},   //Myanmar Standard Time
 	"MUT":  {{"MUT", "+04", ""}},    //Mauritius Time
 	"MYT":  {{"MYT", "+08", ""}},    //Malaysia Time
 	"NDT":  {{"NDT", "-02:30", ""}}, //Newfoundland Daylight Time
@@ -131,8 +131,8 @@ var tzTable = map[string][]TZInfo{
 	"PETT": {{"PETT", "+12", ""}},   //Kamchatka Time
 	"PHOT": {{"PHOT", "+13", ""}},   //Phoenix Island Time
 	"PKT":  {{"PKT", "+05", ""}},    //Pakistan Standard Time
-	"PST": {{"PST", "-08", ""}, //Pacific Standard Time (North America)
-		{"PST", "+08", ""}}, //Philippine Standard Time
+	"PST": {{"PST", "-08", "CA,MX,US"}, //Pacific Standard Time (North America)
+		{"PST", "+08", "PH"}}, //Philippine Standard Time
 	"RET":  {{"RET", "+04", ""}},    //Réunion Time
 	"SAMT": {{"SAMT", "+04", ""}},   //Samara Time
 	"SAST": {{"SAST", "+02", ""}},   //South African Standard Time
@@ -140,8 +140,8 @@ var tzTable = map[string][]TZInfo{
 	"SCT":  {{"SCT", "+04", ""}},    //Seychelles Time
 	"SGT":  {{"SGT", "+08", ""}},    //Singapore Time
 	"SLT":  {{"SLT", "+05:30", ""}}, //Sri Lanka Time
-	"SST": {{"SST", "-11", ""}, //Samoa Standard Time
-		{"SST", "+08", ""}}, //Singapore Standard Time
+	"SST": {{"SST", "-11", "WS,AS"}, //Samoa Standard Time
+		{"SST", "+08", "SG"}}, //Singapore Standard Time
 	"TAHT": {{"TAHT", "-10", ""}},   //Tahiti Time
 	"THA":  {{"THA", "+07", ""}},    //Thailand Standard Time
 	"UTC":  {{"UTC", "Z", ""}},      //Coordinated Universal Time
