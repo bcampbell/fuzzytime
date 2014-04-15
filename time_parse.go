@@ -30,7 +30,6 @@ var timeCrackers = []*regexp.Regexp{
 
 	// "12.33"
 	// "14:21"
-	// TODO: BUG: this'll also pick up time from "30.11.2011"!
 	regexp.MustCompile(`(?i)\b(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*`),
 
 	// TODO: add support for microseconds?
@@ -88,7 +87,8 @@ func (ctx *Context) ExtractTime(s string) (Time, Span, error) {
 			case "tz":
 				offset, err := ctx.parseTZ(sub)
 				if err != nil {
-					return Time{}, Span{}, err
+					break
+					//return Time{}, Span{}, err
 				}
 				tzOffset = offset
 				gotTZ = true
