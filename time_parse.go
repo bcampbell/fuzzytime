@@ -36,9 +36,6 @@ var timeCrackers = []*regexp.Regexp{
 	// "14:21"
 	// "23:59:59.9942"
 	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[:](?P<min>\d{2})(?:[:](?P<sec>\d{2})(?P<fractional>[.]\d+)?)?(?:[^\d]|\z)`),
-
-	// TODO: add support for microseconds?
-
 }
 
 // ExtractTime tries to parse a time from a string.

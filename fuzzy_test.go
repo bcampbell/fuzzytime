@@ -103,6 +103,9 @@ func TestDateTimes(t *testing.T) {
 		//
 		// ambiguous format, but with values that provide enough info
 		// {"25/11/2004","2004-11-25"}
+		//
+		// iso-8601 (when non-ambiguous)
+		// "20100201T131443Z",
 	}
 
 	for _, dat := range testData {
