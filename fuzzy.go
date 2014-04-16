@@ -59,6 +59,8 @@ type Context struct {
 
 // Extract tries to parse a Date and Time from a string
 func (ctx *Context) Extract(s string) DateTime {
+
+	// do time first to cope with cases where the time breaks up the date: "Thu Aug 25 10:46:55 GMT 2011"
 	ft, span, err := ctx.ExtractTime(s)
 	if err != nil {
 		return DateTime{}

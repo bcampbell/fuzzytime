@@ -1,6 +1,7 @@
 package fuzzytime
 
 import (
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -20,19 +21,24 @@ var timeCrackers = []*regexp.Regexp{
 
 	// "3:34PM"
 	// "10:42 am"
-	regexp.MustCompile(`(?i)(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*` + ampmPat),
+	regexp.MustCompile(`(?i)\b(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*` + ampmPat),
 
 	// "13:21:36 GMT"
 	// "15:29 GMT"
 	// "12:35:44+00:00"
-	// "00.01 BST"
-	regexp.MustCompile(`(?i)(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*` + tzPat),
+	// "23:59:59.9942+01:00"
+	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[:](?P<min>\d{2})(?:[:](?P<sec>\d{2})(?P<fractional>[.]\d+)?)?\s*` + tzPat),
 
-	// "12.33"
+	// "00.01 BST"
+	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[.](?P<min>\d{2})(?:[.](?P<sec>\d{2}))?\s*` + tzPat),
+
+	// "14:21:01"
 	// "14:21"
-	regexp.MustCompile(`(?i)\b(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*`),
+	// "23:59:59.9942"
+	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[:](?P<min>\d{2})(?:[:](?P<sec>\d{2})(?P<fractional>[.]\d+)?)?(?:[^\d]|\z)`),
 
 	// TODO: add support for microseconds?
+
 }
 
 // ExtractTime tries to parse a time from a string.
@@ -53,7 +59,7 @@ func (ctx *Context) ExtractTime(s string) (Time, Span, error) {
 
 		var gotTZ bool = false
 		var tzOffset int
-		var err error
+		var fail, err error
 		for i, name := range names {
 			start, end := matchSpans[i*2], matchSpans[(i*2)+1]
 			if start == end {
@@ -68,16 +74,32 @@ func (ctx *Context) ExtractTime(s string) (Time, Span, error) {
 			case "hour":
 				hour, err = strconv.Atoi(sub)
 				if err != nil {
+					fail = err
 					break
 				}
+				if hour < 0 || hour > 23 {
+					fail = errors.New("bad hour value")
+					break
+				}
+
 			case "min":
 				minute, err = strconv.Atoi(sub)
 				if err != nil {
+					fail = err
+					break
+				}
+				if minute < 0 || minute > 59 {
+					fail = errors.New("bad minute value")
 					break
 				}
 			case "sec":
 				second, err = strconv.Atoi(sub)
 				if err != nil {
+					fail = err
+					break
+				}
+				if second < 0 || second > 59 {
+					fail = errors.New("bad seconds value")
 					break
 				}
 			case "am":
@@ -92,11 +114,17 @@ func (ctx *Context) ExtractTime(s string) (Time, Span, error) {
 				}
 				tzOffset = offset
 				gotTZ = true
+			case "fractional":
+				// ignore fractional seconds for now
 			}
 
 		}
 
-		// got enough?
+		if fail != nil {
+			break
+		}
+
+		// got enough to accept?
 		if hour >= 0 && minute >= 0 {
 			if pm && (hour >= 1) && (hour <= 11) {
 				hour += 12
@@ -104,10 +132,11 @@ func (ctx *Context) ExtractTime(s string) (Time, Span, error) {
 			if am && (hour == 12) {
 				hour -= 12
 			}
+
 			ft := Time{}
 			ft.SetHour(hour)
 			ft.SetMinute(minute)
-			if second != -1 {
+			if second >= 0 {
 				ft.SetSecond(second)
 			}
 			if gotTZ {

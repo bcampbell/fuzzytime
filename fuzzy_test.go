@@ -14,7 +14,6 @@ func TestDateTimes(t *testing.T) {
 
 		{"2010-04-02T12:35:44+00:00", "2010-04-02T12:35:44Z"},       // iso 8601
 		{"2008-03-10 13:21:36 GMT", "2008-03-10T13:21:36Z"},         //
-		{"9 Sep 2009 12.33", "2009-09-09T12:33"},                    //(heraldscotland blogs)
 		{"May 25 2010 3:34PM", "2010-05-25T15:34"},                  //(thetimes.co.uk)
 		{"Thursday August 21 2008 10:42 am", "2008-08-21T10:42"},    //(guardian blogs in their new cms)
 		{"Tuesday 16 December 2008 16.23 GMT", "2008-12-16T16:23Z"}, //(Guardian blogs in their new cms)
@@ -47,7 +46,7 @@ func TestDateTimes(t *testing.T) {
 		{"Monday, May. 17, 2010", "2010-05-17"}, // (time.com)
 
 		{"APRIL 10, 2014", "2014-04-10"}, // nytimes.com
-		{"30.12.2011", "2011-12-30"},
+		{"Tuesday October 14 2008 00.01 GMT", "2008-10-14T00:01Z"},
 
 		{"10 ABR 2014 - 20:36 CET", "2014-04-10T20:36+01:00"},      // elpais.com
 		{"9:11 p.m. EDT April 10, 2014", "2014-04-10T21:11-04:00"}, // usatoday.com
@@ -57,7 +56,11 @@ func TestDateTimes(t *testing.T) {
 		// some more obscure cases...
 		{"May 2008", "2008-05"},
 
-		// BST is ambiguous
+		// fractional seconds
+		{"21:59:59.9942", "T21:59:59"},
+		{"21:59:59.9942GMT", "T21:59:59Z"},
+
+		// BST is ambiguous by default
 		//{"Tuesday October 14 2008 00.01 BST", "2008-10-14T00:01+01:00"}, //(Guardian blogs in their new cms)
 		//{"26 May 2007, 02:10:36 BST", "2007-05-26T02:10:36+01:00"},                      //(newsoftheworld)
 		//{"2:43pm BST 16/04/2007", "2007-04-16T14:43+01:00"},         //(telegraph, after munging)
@@ -70,14 +73,33 @@ func TestDateTimes(t *testing.T) {
 		// http://en.wikipedia.org/wiki/Date_and_time_notation_in_the_United_States#Date-time_group
 		//{"091630Z JUL 11", "2011-07T09:16:30Z"
 
+		// *****
 		// Ones that should fail
+		// *****
 
-		// time or date?
-		{"10.12", ""},
 		// ambiguous (at least with the default date resolver)
 		{"03/09/2007", ""}, //(Sky News blogs, mirror)
 		{"03/09/12", ""},
+		{"01.12.2011", ""},
 
+		// time or date?
+		{"10.12", ""},
+
+		// invalid values:
+		{"25:10:01GMT", ""},
+		{"2000-15-02", ""},
+		{"2000-11-92", ""},
+		{"52nd feb 2000", ""},
+		{"100:30GMT", ""},
+		{"21.59.59.9942", ""},
+
+		// *****
+		// Ones we _should_ be able to cope with, but can't yet:
+		// *****
+		//
+		// 12.05 ambiguous, but not in this context
+		// {"9 Sep 2009 12.05", "2009-09-09T12:05"},                    //(heraldscotland blogs)
+		//
 		// ambiguous format, but with values that provide enough info
 		// {"25/11/2004","2004-11-25"}
 	}

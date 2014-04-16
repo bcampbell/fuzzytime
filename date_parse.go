@@ -88,6 +88,9 @@ func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 		if matchSpans == nil {
 			continue
 		}
+
+		var fail bool
+
 		unknowns := make([]int, 0, 3) // for ambiguous components
 		for i, name := range names {
 			start, end := matchSpans[i*2], matchSpans[(i*2)+1]
@@ -103,6 +106,7 @@ func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 					year = ExtendYear(year)
 					fd.SetYear(year)
 				} else {
+					fail = true
 					break
 				}
 			case "month":
@@ -110,6 +114,7 @@ func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 				if e == nil {
 					// it was a number
 					if month < 1 || month > 12 {
+						fail = true
 						break // month out of range
 					}
 					fd.SetMonth(month)
@@ -117,6 +122,7 @@ func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 					// try month name
 					month, ok := monthLookup[sub]
 					if !ok {
+						fail = true
 						break // nope.
 					}
 					fd.SetMonth(month)
@@ -126,14 +132,17 @@ func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 				// we'll make sure the first month is valid, then ignore it
 				_, ok := monthLookup[sub]
 				if !ok {
+					fail = true
 					break
 				}
 			case "day":
 				day, e := strconv.Atoi(sub)
 				if e != nil {
+					fail = true
 					break
 				}
 				if day < 1 || day > 31 {
+					fail = true
 					break
 				}
 				fd.SetDay(day)
@@ -141,10 +150,16 @@ func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 				// could be day, month or year...
 				x, e := strconv.Atoi(sub)
 				if e != nil {
+					fail = true
 					break
 				}
 				unknowns = append(unknowns, x)
 			}
+		}
+
+		if fail {
+			// regexp matched, but values sucked.
+			break
 		}
 
 		// got enough?
