@@ -60,14 +60,15 @@ func TestDateTimes(t *testing.T) {
 		{"21:59:59.9942", "T21:59:59"},
 		{"21:59:59.9942GMT", "T21:59:59Z"},
 
+		// tricky ones where hour can get picked up as year if not careful!
+		{"Thu Aug 25 10:46:55 GMT 2011", "2011-08-25T10:46:55Z"},       // (www.yorkshireeveningpost.co.uk)
+		{"Wed Apr 16 17:17:43 NZST 2014", "2014-04-16T17:17:43+12:00"}, // unix date command
+
 		// BST is ambiguous by default
 		//{"Tuesday October 14 2008 00.01 BST", "2008-10-14T00:01+01:00"}, //(Guardian blogs in their new cms)
 		//{"26 May 2007, 02:10:36 BST", "2007-05-26T02:10:36+01:00"},                      //(newsoftheworld)
 		//{"2:43pm BST 16/04/2007", "2007-04-16T14:43+01:00"},         //(telegraph, after munging)
 		//{"Monday 30 July 2012 08.38 BST", *"2012-7-30T8:38:0+01:00")}, // (guardian.co.uk)
-
-		// NOTE: this is a tricky one where hour can get picked up as year if not careful!
-		{"Thu Aug 25 10:46:55 GMT 2011", "2011-08-25T10:46:55Z"}, // (www.yorkshireeveningpost.co.uk)
 
 		// Other possible formats to support:
 		// http://en.wikipedia.org/wiki/Date_and_time_notation_in_the_United_States#Date-time_group
