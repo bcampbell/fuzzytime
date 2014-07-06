@@ -112,10 +112,8 @@ func (d *Date) ISOFormat() string {
 		if d.HasMonth() {
 			if d.HasDay() {
 				return fmt.Sprintf("%04d-%02d-%02d", d.Year(), d.Month(), d.Day())
-			} else {
-
-				return fmt.Sprintf("%04d-%02d", d.Year(), d.Month())
 			}
+			return fmt.Sprintf("%04d-%02d", d.Year(), d.Month())
 		} else {
 			return fmt.Sprintf("%04d", d.Year())
 		}

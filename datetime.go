@@ -36,7 +36,7 @@ func (dt *DateTime) ISOFormat() string {
 	return dt.Date.ISOFormat() + "T" + dt.Time.ISOFormat()
 }
 
-// FullDate returns true if Year, Month and Day are all set
+// HasFullDate returns true if Year, Month and Day are all set
 func (dt *DateTime) HasFullDate() bool {
 	return dt.HasYear() && dt.HasMonth() && dt.HasDay()
 }

@@ -14,7 +14,7 @@ type Span struct {
 
 // DefaultContext is a predefined context which bails out if timezones or
 // dates are ambiguous. It makes no attempt to resolve them.
-var DefaultContext Context = Context{
+var DefaultContext = Context{
 	DateResolver: func(a, b, c int) (Date, error) {
 		return Date{}, errors.New("ambiguous date")
 	},
@@ -22,14 +22,14 @@ var DefaultContext Context = Context{
 }
 
 // USContext is a prefefined Context which opts for US timezones and mm/dd/yy dates
-var USContext Context = Context{
+var USContext = Context{
 	DateResolver: MDYResolver,
 	TZResolver:   DefaultTZResolver("US"),
 }
 
 // WesternContext is a predefined Context which opts for UK and US timezones
 // and dd/mm/yy dates
-var WesternContext Context = Context{
+var WesternContext = Context{
 	DateResolver: DMYResolver,
 	TZResolver:   DefaultTZResolver("GB,US"),
 }
@@ -39,13 +39,13 @@ var WesternContext Context = Context{
 // Equivalent to DefaultContext.Extract()
 func Extract(s string) DateTime { return DefaultContext.Extract(s) }
 
-// Extract tries to parse a Time from a string.
+// ExtractTime tries to parse a Time from a string.
 // Equivalent to DefaultContext.ExtractTime()
 // Returns the parsed time information and a span showing which portion of the
 // text matched, or an error.
 func ExtractTime(s string) (Time, Span, error) { return DefaultContext.ExtractTime(s) }
 
-// Extract tries to parse a Date from a string.
+// ExtractDate tries to parse a Date from a string.
 // Equivalent to DefaultContext.ExtractDate()
 // Returns the parsed date information and a span showing which portion of the
 // text matched, or an error.

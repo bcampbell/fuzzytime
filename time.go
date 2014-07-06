@@ -124,7 +124,7 @@ func (t *Time) Empty() bool {
 	return t.set == 0
 }
 
-// Return the most precise possible ISO-formatted time
+// ISOFormat returns the most precise possible ISO-formatted time
 func (t *Time) ISOFormat() string {
 	var out string
 	if t.HasHour() {

@@ -93,7 +93,7 @@ func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 		unknowns := make([]int, 0, 3) // for ambiguous components
 		for i, name := range names {
 			start, end := matchSpans[i*2], matchSpans[(i*2)+1]
-			var sub string = ""
+			var sub string
 			if start >= 0 && end >= 0 {
 				sub = strings.ToLower(s[start:end])
 			}

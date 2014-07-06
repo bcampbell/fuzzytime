@@ -12,8 +12,8 @@ import (
 //  Z
 //  +hh:mm, +hhmm, or +hh
 //  -hh:mm, -hhmm, or -hh
-var tzPat string = `(?i)(?P<tz>Z|[A-Z]{2,5}|(([-+])(\d{2})((:?)(\d{2}))?))`
-var ampmPat string = `(?i)(?:(?P<am>(am|a[.]m[.]))|(?P<pm>(pm|p[.]m[.])))`
+var tzPat = `(?i)(?P<tz>Z|[A-Z]{2,5}|(([-+])(\d{2})((:?)(\d{2}))?))`
+var ampmPat = `(?i)(?:(?P<am>(am|a[.]m[.]))|(?P<pm>(pm|p[.]m[.])))`
 
 var timeCrackers = []*regexp.Regexp{
 	// "4:48PM GMT"
@@ -54,7 +54,7 @@ func (ctx *Context) ExtractTime(s string) (Time, Span, error) {
 		var hour, minute, second int = -1, -1, -1
 		var am, pm bool = false, false
 
-		var gotTZ bool = false
+		var gotTZ = false
 		var tzOffset int
 		var fail, err error
 		for i, name := range names {
@@ -62,7 +62,7 @@ func (ctx *Context) ExtractTime(s string) (Time, Span, error) {
 			if start == end {
 				continue
 			}
-			var sub string = ""
+			var sub string
 			if start >= 0 && end >= 0 {
 				sub = strings.ToLower(s[start:end])
 			}
