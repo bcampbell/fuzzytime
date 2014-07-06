@@ -10,9 +10,13 @@ import (
 
 // TZInfo holds info about a timezone offset
 type TZInfo struct {
-	Name   string // eg "BST", "UTC", "NZDT"
-	Offset string // ISO8601 timezone [+-]<HH>[:<MM>]
-	Locale string // locale identifiers to help resolve ambiguities
+	// Name of the timezone eg "BST", "UTC", "NZDT"
+	Name string
+	// Offset from UTC, in ISO8601 form [+-]<HH>[:<MM>]
+	Offset string
+	// Locale contains comma-separated country identifiers
+	// to help resolve ambiguities
+	Locale string
 }
 
 // lookup table of common abbreviations of timezones
@@ -158,7 +162,8 @@ var tzTable = map[string][]TZInfo{
 	"YEKT": {{"YEKT", "+05", ""}},   //Yekaterinburg Time
 }
 
-// OffsetToTZ converts an offset in seconds from UTC into an ISO8601-style offset
+// OffsetToTZ converts an offset in seconds from UTC into an ISO8601-style
+// offset (like "+HH:MM")
 func OffsetToTZ(secs int) string {
 	if secs == 0 {
 		return "Z"
@@ -210,6 +215,10 @@ func TZToOffset(s string) (int, error) {
 }
 
 // FindTimeZone returns timezones with the matching name (eg "BST")
+// Some timezone names are ambiguous (eg "BST"), so all the matching
+// ones will be returned. It's up to the caller to disambiguate them.
+// To aid in this, ambiguous timezones include a list of country
+// locale codes ("US", "AU" etc) in where they are used.
 func FindTimeZone(name string) []TZInfo {
 	name = strings.ToUpper(name)
 	matches, got := tzTable[name]

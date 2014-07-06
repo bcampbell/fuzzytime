@@ -90,7 +90,7 @@ func TestDateTimes(t *testing.T) {
 		{"25:10:01GMT", ""},
 		{"2000-15-02", ""},
 		{"2000-11-92", ""},
-		{"52nd feb 2000", ""},
+		{"52nd feb 2000", "2000-02"}, // hmm. should reject outright?
 		{"100:30GMT", ""},
 		{"21.59.59.9942", ""},
 

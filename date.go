@@ -72,6 +72,22 @@ func (d *Date) Empty() bool {
 	return true
 }
 
+// sane returns true if date is a valid one
+func (d *Date) sane() bool {
+	if d.HasMonth() {
+		if d.Month() < 1 || d.Month() > 12 {
+			return false
+		}
+	}
+	if d.HasDay() {
+		// TODO: adjust for month! (and leapyears!)
+		if d.Day() < 1 || d.Day() > 31 {
+			return false
+		}
+	}
+	return true
+}
+
 // String returns "YYYY-MM-DD" with question marks in place of
 // any missing values
 func (d *Date) String() string {

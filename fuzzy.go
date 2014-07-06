@@ -5,13 +5,15 @@ import (
 	"strings"
 )
 
-// Span represents the range [Begin,End), used
+// Span represents the range [Begin,End), used to indicate the part
+// of a string from which time or date information was parsed.
 type Span struct {
 	Begin int
 	End   int
 }
 
-// DefaultContext is a predefined context which bails out if timezones or dates are ambiguous
+// DefaultContext is a predefined context which bails out if timezones or
+// dates are ambiguous. It makes no attempt to resolve them.
 var DefaultContext Context = Context{
 	DateResolver: func(a, b, c int) (Date, error) {
 		return Date{}, errors.New("ambiguous date")
@@ -19,13 +21,13 @@ var DefaultContext Context = Context{
 	TZResolver: DefaultTZResolver(""),
 }
 
-// USContext is a prefefined context which opts for US timezones and mm/dd/yy dates
+// USContext is a prefefined Context which opts for US timezones and mm/dd/yy dates
 var USContext Context = Context{
 	DateResolver: MDYResolver,
 	TZResolver:   DefaultTZResolver("US"),
 }
 
-// WesternContext is a predefined context which opts for UK and US timezones
+// WesternContext is a predefined Context which opts for UK and US timezones
 // and dd/mm/yy dates
 var WesternContext Context = Context{
 	DateResolver: DMYResolver,
@@ -33,6 +35,7 @@ var WesternContext Context = Context{
 }
 
 // Extract tries to parse a Date and Time from a string.
+// If none found, the returned DateTime will be empty
 // Equivalent to DefaultContext.Extract()
 func Extract(s string) DateTime { return DefaultContext.Extract(s) }
 
@@ -61,11 +64,12 @@ type Context struct {
 	// indicates the resolver can't decide.
 	DateResolver func(a, b, c int) (Date, error)
 	// TZResolver returns the offset in seconds from UTC of the named zone (eg "EST").
-	// if the resolves can't decide which timezone it is, it will return an error.
+	// if the resolver can't decide which timezone it is, it will return an error.
 	TZResolver func(name string) (int, error)
 }
 
 // Extract tries to parse a Date and Time from a string
+// If none found, the returned DateTime will be empty
 func (ctx *Context) Extract(s string) DateTime {
 
 	// do time first to cope with cases where the time breaks up the date: "Thu Aug 25 10:46:55 GMT 2011"
@@ -112,13 +116,15 @@ func DefaultTZResolver(preferredLocales string) func(name string) (int, error) {
 	}
 }
 
-// DMYResolver treats ambiguous dates as DD/MM/YY
+// DMYResolver is a helper function for Contexts which treats
+// ambiguous dates as DD/MM/YY
 func DMYResolver(a, b, c int) (Date, error) {
 	c = ExtendYear(c)
 	return *NewDate(c, b, a), nil
 }
 
-// MDYResolver treats ambiguous dates as MM/DD/YY
+// MDYResolver is a helper function for Contexts which treats
+// ambiguous dates as MM/DD/YY
 func MDYResolver(a, b, c int) (Date, error) {
 	c = ExtendYear(c)
 	return *NewDate(c, a, b), nil

@@ -79,10 +79,9 @@ func ExtendYear(year int) int {
 // It returns a Date and Span indicating which part of string matched.
 func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 
-	fd := Date{}
-	span := Span{}
-
 	for _, pat := range dateCrackers {
+		fd := Date{}
+		span := Span{}
 		names := pat.SubexpNames()
 		matchSpans := pat.FindStringSubmatchIndex(s)
 		if matchSpans == nil {
@@ -159,13 +158,15 @@ func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 
 		if fail {
 			// regexp matched, but values sucked.
-			break
+			continue
 		}
 
 		// got enough?
 		if fd.HasYear() && fd.HasMonth() {
-			span.Begin, span.End = matchSpans[0], matchSpans[1]
-			return fd, span, nil
+			if fd.sane() {
+				span.Begin, span.End = matchSpans[0], matchSpans[1]
+				return fd, span, nil
+			}
 		} else {
 			// got some ambiguous components to try?
 			if len(unknowns) == 2 && fd.HasYear() {
@@ -178,7 +179,7 @@ func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 					return Date{}, Span{}, err
 				}
 
-				if fd.HasYear() && fd.HasMonth() && fd.HasDay() {
+				if fd.HasYear() && fd.HasMonth() && fd.HasDay() && fd.sane() {
 					// resolved.
 					span.Begin, span.End = matchSpans[0], matchSpans[1]
 					return fd, span, nil
