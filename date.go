@@ -20,15 +20,26 @@ func (d *Date) Month() int { return d.month }
 // Day returns the day (result undefined if field unset)
 func (d *Date) Day() int { return d.day }
 
-func (d *Date) SetYear(year int)   { d.year = year }
+// SetYear sets the year field
+func (d *Date) SetYear(year int) { d.year = year }
+
+// SetMonth sets the month field
 func (d *Date) SetMonth(month int) { d.month = month }
-func (d *Date) SetDay(day int)     { d.day = day }
 
-func (d *Date) HasYear() bool  { return d.year != 0 }
+// SetDay sets the day field
+func (d *Date) SetDay(day int) { d.day = day }
+
+// HasYear returns true if the year is set
+func (d *Date) HasYear() bool { return d.year != 0 }
+
+// HasMonth returns true if the month is set
 func (d *Date) HasMonth() bool { return d.month != 0 }
-func (d *Date) HasDay() bool   { return d.day != 0 }
 
-// Equals returns true if dates match
+// HasDay returns trus if the day is set
+func (d *Date) HasDay() bool { return d.day != 0 }
+
+// Equals returns true if dates match. Fields present in one date but
+// not the other are considered mismatches.
 func (d *Date) Equals(other *Date) bool {
 	// TODO: should check if fields are set before comparing
 	if d.year == other.year && d.month == other.month && d.day == other.day {
@@ -37,6 +48,9 @@ func (d *Date) Equals(other *Date) bool {
 	return false
 }
 
+// Conflicts returns true if date d conflicts with the other date.
+// Missing fields are not considered so, for example "2013-01-05"
+// doesn't conflict with "2013-01"
 func (d *Date) Conflicts(other *Date) bool {
 	if d.HasYear() && other.HasYear() && d.Year() != other.Year() {
 		return true

@@ -178,7 +178,7 @@ func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 					return Date{}, Span{}, err
 				}
 
-				if fd.HasYear() && fd.HasMonth() && fd.HasYear() {
+				if fd.HasYear() && fd.HasMonth() && fd.HasDay() {
 					// resolved.
 					span.Begin, span.End = matchSpans[0], matchSpans[1]
 					return fd, span, nil

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Span represents the range [Begin,End)
+// Span represents the range [Begin,End), used
 type Span struct {
 	Begin int
 	End   int
@@ -38,10 +38,14 @@ func Extract(s string) DateTime { return DefaultContext.Extract(s) }
 
 // Extract tries to parse a Time from a string.
 // Equivalent to DefaultContext.ExtractTime()
+// Returns the parsed time information and a span showing which portion of the
+// text matched, or an error.
 func ExtractTime(s string) (Time, Span, error) { return DefaultContext.ExtractTime(s) }
 
 // Extract tries to parse a Date from a string.
 // Equivalent to DefaultContext.ExtractDate()
+// Returns the parsed date information and a span showing which portion of the
+// text matched, or an error.
 func ExtractDate(s string) (Date, Span, error) { return DefaultContext.ExtractDate(s) }
 
 // Context provides helper functions to resolve ambiguous dates and timezones.
@@ -49,11 +53,15 @@ func ExtractDate(s string) (Date, Span, error) { return DefaultContext.ExtractDa
 // or Central Standard Time in Australia.
 // Or, the date "5/2/10". It could Feburary 5th, 2010 or May 2nd 2010. Or even
 // Feb 10th 2005, depending on country. Even "05/02/2010" is ambiguous.
+// If you know something about the types of times and dates you're likely to
+// encounter, you can provide a Context struct to guide the parsing.
 type Context struct {
 	// DateResolver is called when ambigous dates are encountered eg (10/11/12)
-	// it should return a date or an error
+	// It should return a date, if one can be decided. Returning an error
+	// indicates the resolver can't decide.
 	DateResolver func(a, b, c int) (Date, error)
-	//TZResolver returns the offset in seconds from UTC of the named zone (eg "EST").
+	// TZResolver returns the offset in seconds from UTC of the named zone (eg "EST").
+	// if the resolves can't decide which timezone it is, it will return an error.
 	TZResolver func(name string) (int, error)
 }
 

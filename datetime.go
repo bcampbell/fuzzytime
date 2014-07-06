@@ -1,7 +1,8 @@
 package fuzzytime
 
 // DateTime represents a set of fields for date and time, any of which may
-// be unset. The default initialisation is an empty with all fields unset
+// be unset. The default initialisation is a valid empty datetime with no
+// fields set.
 type DateTime struct {
 	Date
 	Time
@@ -23,8 +24,9 @@ func (dt *DateTime) Empty() bool {
 	return dt.Time.Empty() && dt.Date.Empty()
 }
 
-// ISOFormat returns the most precise-possible datetime
-// aims for "YYYY-MM-DDTHH:MM:SS+TZ" but will drop off
+// ISOFormat returns the most precise-possible datetime given the available
+// data.
+// Aims for "YYYY-MM-DDTHH:MM:SS+TZ" but will drop off
 // higher-precision components as required eg "YYYY-MM"
 func (dt *DateTime) ISOFormat() string {
 	if dt.Time.Empty() {
@@ -39,6 +41,11 @@ func (dt *DateTime) HasFullDate() bool {
 	return dt.HasYear() && dt.HasMonth() && dt.HasDay()
 }
 
+// Conflicts returns true if the two datetimes conflict.
+// Note that this is not the same as the two being equal - one
+// datetime can be more precise than the other. They are only in
+// conflict if they have different values set for the same field.
+// eg "2012-01-01T03:34:10" doesn't conflict with "03:34"
 func (dt *DateTime) Conflicts(other *DateTime) bool {
 	return dt.Time.Conflicts(&other.Time) || dt.Date.Conflicts(&other.Date)
 }
