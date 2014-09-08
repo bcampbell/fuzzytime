@@ -72,7 +72,7 @@ func (d *Date) Empty() bool {
 	return true
 }
 
-// sane returns true if date is a valid one
+// sane returns true if date isn't obviously bogus
 func (d *Date) sane() bool {
 	if d.HasMonth() {
 		if d.Month() < 1 || d.Month() > 12 {

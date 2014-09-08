@@ -59,6 +59,12 @@ var dateCrackers = []*regexp.Regexp{
 	   r'(?P<cruftmonth>\w{3,})/(?P<month>\w{3,})\s+(?P<year>\d{4})',
 	*/
 
+	// Missing year, eg
+	// Thu April 24th
+	regexp.MustCompile(`(?i)(?P<dayname>\w{3,})[.,\s]+(?P<month>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?`),
+
+	// April 24th
+	regexp.MustCompile(`(?i)(?P<month>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?`),
 }
 
 // ExtendYear extends 2-digit years into 4 digits.
@@ -162,7 +168,7 @@ func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 		}
 
 		// got enough?
-		if fd.HasYear() && fd.HasMonth() {
+		if (fd.HasYear() && fd.HasMonth()) || (fd.HasMonth() && fd.HasDay()) {
 			if fd.sane() {
 				span.Begin, span.End = matchSpans[0], matchSpans[1]
 				return fd, span, nil
