@@ -103,7 +103,7 @@ func (t *Time) Conflicts(other *Time) bool {
 // String returns "hh:mm:ss+tz", with question marks in place of
 // any missing values (except for timezone, which will be blank if missing)
 func (t *Time) String() string {
-	var hour, minute, second, tz = "????", "??", "??", ""
+	var hour, minute, second, tz = "??", "??", "??", ""
 	if t.HasHour() {
 		hour = fmt.Sprintf("%02d", t.Hour())
 	}

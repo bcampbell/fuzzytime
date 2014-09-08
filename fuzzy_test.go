@@ -123,13 +123,14 @@ func TestPartial(t *testing.T) {
 		in       string
 		expected string
 	}{
-		{"Thu April 24th", "????-04-24"},
-		{"April 24th", "????-04-24"},
-		{"May 2", "????-05-02"},
+		{"Thu April 24th", "????-04-24 ??:??:??"},
+		{"April 24th", "????-04-24 ??:??:??"},
+		{"May 2", "????-05-02 ??:??:??"},
+		{"8:50am Thu April 24th", "????-04-24 08:50:??"},
 	}
 	for _, dat := range testData {
 		dt := Extract(dat.in)
-		got := dt.Date.String()
+		got := dt.String()
 		if got != dat.expected {
 			t.Errorf("Extract(%s): expected %s, but got %s", dat.in, dat.expected, got)
 		}

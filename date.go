@@ -64,6 +64,20 @@ func (d *Date) Conflicts(other *Date) bool {
 	return false
 }
 
+// Merge copies all fields set in other into d
+// any fields unset in other are left unchanged in d.
+func (d *Date) Merge(other *Date) {
+	if other.HasYear() {
+		d.SetYear(other.Year())
+	}
+	if other.HasMonth() {
+		d.SetMonth(other.Month())
+	}
+	if other.HasDay() {
+		d.SetDay(other.Day())
+	}
+}
+
 // Empty tests if date is blank (ie all fields unset)
 func (d *Date) Empty() bool {
 	if d.HasYear() || d.HasMonth() || d.HasDay() {
