@@ -83,6 +83,7 @@ func ExtendYear(year int) int {
 
 // ExtractDate tries to parse a date from a string.
 // It returns a Date and Span indicating which part of string matched.
+// If an error occurs, an empty Date will be returned.
 func (ctx *Context) ExtractDate(s string) (Date, Span, error) {
 
 	for _, pat := range dateCrackers {

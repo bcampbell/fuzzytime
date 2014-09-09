@@ -15,16 +15,19 @@ func ExampleExtract() {
 	}
 
 	for _, inp := range inputs {
-		dt := Extract(inp)
-		fmt.Println(dt.ISOFormat())
+		dt, spans, err := Extract(inp)
+		if err != nil {
+			panic(fmt.Errorf("Extract(%s) error: %s", inp, err))
+		}
+		fmt.Println(dt.ISOFormat(), spans)
 	}
 
 	// Output:
-	// 2014-04-16T17:32:51+12:00
-	// 2010-02-01T13:14:43Z
-	//
-	// 1999-03-10
-	// T14:51
+	// 2014-04-16T17:32:51+12:00 [{0 29}]
+	// 2010-02-01T13:14:43Z [{0 20}]
+	//  []
+	// 1999-03-10 [{13 29}]
+	// T14:51 [{0 6}]
 }
 
 func ExampleContext() {
@@ -36,7 +39,7 @@ func ExampleContext() {
 	// USA context:
 	fmt.Println("in USA:")
 	for _, inp := range inputs {
-		dt := USContext.Extract(inp)
+		dt, _, _ := USContext.Extract(inp)
 		fmt.Println(dt.ISOFormat())
 	}
 
@@ -48,7 +51,7 @@ func ExampleContext() {
 
 	fmt.Println("in Australia:")
 	for _, inp := range inputs {
-		dt := aussie.Extract(inp)
+		dt, _, _ := aussie.Extract(inp)
 		fmt.Println(dt.ISOFormat())
 	}
 	// Output:

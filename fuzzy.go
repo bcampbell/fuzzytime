@@ -5,13 +5,6 @@ import (
 	"strings"
 )
 
-// Span represents the range [Begin,End), used to indicate the part
-// of a string from which time or date information was parsed.
-type Span struct {
-	Begin int
-	End   int
-}
-
 // DefaultContext is a predefined context which bails out if timezones or
 // dates are ambiguous. It makes no attempt to resolve them.
 var DefaultContext = Context{
@@ -37,7 +30,7 @@ var WesternContext = Context{
 // Extract tries to parse a Date and Time from a string.
 // If none found, the returned DateTime will be empty
 // Equivalent to DefaultContext.Extract()
-func Extract(s string) DateTime { return DefaultContext.Extract(s) }
+func Extract(s string) (DateTime, []Span, error) { return DefaultContext.Extract(s) }
 
 // ExtractTime tries to parse a Time from a string.
 // Equivalent to DefaultContext.ExtractTime()
@@ -69,23 +62,41 @@ type Context struct {
 }
 
 // Extract tries to parse a Date and Time from a string
-// If none found, the returned DateTime will be empty
-func (ctx *Context) Extract(s string) DateTime {
-
+// It also returns a sorted list of spans specifing which bits of the
+// string were used.
+// If none found (or if there is an error), the returned
+// DateTime will be empty.
+func (ctx *Context) Extract(s string) (DateTime, []Span, error) {
 	// do time first to cope with cases where the time breaks up the date: "Thu Aug 25 10:46:55 GMT 2011"
-	ft, span, err := ctx.ExtractTime(s)
+	ft, span1, err := ctx.ExtractTime(s)
 	if err != nil {
-		return DateTime{}
+		return DateTime{}, nil, err
 	}
 	if !ft.Empty() {
 		// snip the matched time out of the string
 		// (hack for nasty case where an hour can look like a 2-digit year)
-		s = s[:span.Begin] + s[span.End:]
+		s = s[:span1.Begin] + s[span1.End:]
 	}
 
-	fd, _, _ := ctx.ExtractDate(s)
+	fd, span2, err := ctx.ExtractDate(s)
+	if err != nil {
+		return DateTime{}, nil, err
+	}
 
-	return DateTime{fd, ft}
+	if !fd.Empty() {
+		// fix up the second span to allow for the snipping
+		if span2.Begin >= span1.Begin {
+			span2.Begin += span1.End - span1.Begin
+		}
+		if span2.End >= span1.Begin {
+			span2.End += span1.End - span1.Begin
+		}
+	}
+
+	// sort/merge spans
+	spans := tidySpans([]Span{span1, span2})
+
+	return DateTime{fd, ft}, spans, nil
 }
 
 // DefaultTZResolver returns a TZResolver function which uses a list of country codes in

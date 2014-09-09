@@ -109,7 +109,10 @@ func TestDateTimes(t *testing.T) {
 	}
 
 	for _, dat := range testData {
-		dt := Extract(dat.in)
+		dt, _, _ := Extract(dat.in)
+		//if err != nil {
+		//	t.Errorf("Extract(%s) failed: %s", dat.in, err)
+		//}
 		got := dt.ISOFormat()
 		if got != dat.expected {
 			t.Errorf("Extract(%s): expected %s, but got %s", dat.in, dat.expected, got)
@@ -129,7 +132,10 @@ func TestPartial(t *testing.T) {
 		{"8:50am Thu April 24th", "????-04-24 08:50:??"},
 	}
 	for _, dat := range testData {
-		dt := Extract(dat.in)
+		dt, _, err := Extract(dat.in)
+		if err != nil {
+			t.Errorf("Extract(%s) failed: %s", dat.in, err)
+		}
 		got := dt.String()
 		if got != dat.expected {
 			t.Errorf("Extract(%s): expected %s, but got %s", dat.in, dat.expected, got)
@@ -148,7 +154,10 @@ func TestAmbiguous(t *testing.T) {
 		// TODO: add some US timezone tests
 	}
 	for _, dat := range usaData {
-		dt := USContext.Extract(dat.in)
+		dt, _, err := USContext.Extract(dat.in)
+		if err != nil {
+			t.Errorf("Extract(%s) failed: %s", dat.in, err)
+		}
 		got := dt.ISOFormat()
 		if got != dat.expected {
 			t.Errorf("Extract(%s): expected %s, but got %s", dat.in, dat.expected, got)
@@ -165,7 +174,10 @@ func TestAmbiguous(t *testing.T) {
 		{"4:48PM BST 22/02/2008", "2008-02-22T16:48+01:00"},
 	}
 	for _, dat := range ukData {
-		dt := WesternContext.Extract(dat.in)
+		dt, _, err := WesternContext.Extract(dat.in)
+		if err != nil {
+			t.Errorf("Extract(%s) failed: %s", dat.in, err)
+		}
 		got := dt.ISOFormat()
 		if got != dat.expected {
 			t.Errorf("Extract(%s): expected %s, but got %s", dat.in, dat.expected, got)

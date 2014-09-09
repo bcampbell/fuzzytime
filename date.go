@@ -6,7 +6,7 @@ import (
 
 // A Date represents a year/month/day set where any of the three may be
 // unset.
-// default initialisation (ie Date{}) is a valid Date, with no fields set.
+// default initialisation (ie Date{}) is a valid but empty Date.
 type Date struct {
 	year, month, day int // internally, we'll say 0=undefined
 }
@@ -64,7 +64,7 @@ func (d *Date) Conflicts(other *Date) bool {
 	return false
 }
 
-// Merge copies all fields set in other into d
+// Merge copies all fields set in other into d.
 // any fields unset in other are left unchanged in d.
 func (d *Date) Merge(other *Date) {
 	if other.HasYear() {
