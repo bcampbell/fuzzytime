@@ -13,20 +13,20 @@ var dateCrackers = []*regexp.Regexp{
 	//"Tue 29 Jan 08"
 	//"Monday, 22 October 2007"
 	//"Tuesday, 21st January, 2003"
-	regexp.MustCompile(`(?i)(?P<dayname>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?\s+(?P<month>\w{3,})[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
+	regexp.MustCompile(`(?i)(?P<dayname>\w{3,})[.,\s\p{Z}]+(?P<day>\d{1,2})(?:st|nd|rd|th)?[\s\p{Z}]+(?P<month>\w{3,})[.,\s\p{Z}]+(?P<year>(\d{4})|(\d{2}))`),
 
 	// "Friday    August    11, 2006"
 	// "Tuesday October 14 2008"
 	// "Thursday August 21 2008"
 	// "Monday, May. 17, 2010"
-	regexp.MustCompile(`(?i)(?P<dayname>\w{3,})[.,\s]+(?P<month>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
+	regexp.MustCompile(`(?i)(?P<dayname>\w{3,})[.,\s\p{Z}]+(?P<month>\w{3,})[.,\s\p{Z}]+(?P<day>\d{1,2})(?:st|nd|rd|th)?[.,\s\p{Z}]+(?P<year>(\d{4})|(\d{2}))`),
 
 	// "9 Sep 2009", "09 Sep, 2009", "01 May 10"
 	// "23rd November 2007", "22nd May 2008"
-	regexp.MustCompile(`(?i)(?P<day>\d{1,2})(?:st|nd|rd|th)?\s+(?P<month>\w{3,})[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
+	regexp.MustCompile(`(?i)(?P<day>\d{1,2})(?:st|nd|rd|th)?[\s\p{Z}]+(?P<month>\w{3,})[.,\s\p{Z}]+(?P<year>(\d{4})|(\d{2}))`),
 
 	// "Mar 3, 2007", "Jul 21, 08", "May 25 2010", "May 25th 2010", "February 10 2008"
-	regexp.MustCompile(`(?i)(?P<month>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?[.,\s]+(?P<year>(\d{4})|(\d{2}))`),
+	regexp.MustCompile(`(?i)(?P<month>\w{3,})[.,\s\p{Z}]+(?P<day>\d{1,2})(?:st|nd|rd|th)?[.,\s\p{Z}]+(?P<year>(\d{4})|(\d{2}))`),
 
 	// "2010-04-02"
 	regexp.MustCompile(`(?i)(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})`),
@@ -38,7 +38,7 @@ var dateCrackers = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)(?P<day>\d{1,2})-(?P<month>\w{3,})-(?P<year>(\d{4})|(\d{2}))`),
 
 	// "May 2011"
-	regexp.MustCompile(`(?i)(?P<month>\w{3,})\s+(?P<year>\d{4})`),
+	regexp.MustCompile(`(?i)(?P<month>\w{3,})[\s\p{Z}]+(?P<year>\d{4})`),
 
 	// ambiguous formats
 	// "11/02/2008"
@@ -56,15 +56,15 @@ var dateCrackers = []*regexp.Regexp{
 	   # year/month only
 
 	   # "May/June 2011" (common for publications) - just use second month
-	   r'(?P<cruftmonth>\w{3,})/(?P<month>\w{3,})\s+(?P<year>\d{4})',
+	   r'(?P<cruftmonth>\w{3,})/(?P<month>\w{3,})[\s\p{Z}]+(?P<year>\d{4})',
 	*/
 
 	// Missing year, eg
 	// Thu April 24th
-	regexp.MustCompile(`(?i)(?P<dayname>\w{3,})[.,\s]+(?P<month>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?`),
+	regexp.MustCompile(`(?i)(?P<dayname>\w{3,})[.,\s\p{Z}]+(?P<month>\w{3,})[.,\s\p{Z}]+(?P<day>\d{1,2})(?:st|nd|rd|th)?`),
 
 	// April 24th
-	regexp.MustCompile(`(?i)(?P<month>\w{3,})[.,\s]+(?P<day>\d{1,2})(?:st|nd|rd|th)?`),
+	regexp.MustCompile(`(?i)(?P<month>\w{3,})[.,\s\p{Z}]+(?P<day>\d{1,2})(?:st|nd|rd|th)?`),
 }
 
 // ExtendYear extends 2-digit years into 4 digits.

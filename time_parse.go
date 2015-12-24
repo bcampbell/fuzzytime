@@ -17,20 +17,20 @@ var ampmPat = `(?i)(?:(?P<am>(am|a[.]m[.]))|(?P<pm>(pm|p[.]m[.])))`
 
 var timeCrackers = []*regexp.Regexp{
 	// "4:48PM GMT"
-	regexp.MustCompile(`(?i)(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*` + ampmPat + `\s*` + tzPat),
+	regexp.MustCompile(`(?i)(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?[\s\p{Z}]*` + ampmPat + `[\s\p{Z}]*` + tzPat),
 
 	// "3:34PM"
 	// "10:42 am"
-	regexp.MustCompile(`(?i)\b(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?\s*` + ampmPat),
+	regexp.MustCompile(`(?i)\b(?P<hour>\d{1,2})[:.](?P<min>\d{2})(?:[:.](?P<sec>\d{2}))?[\s\p{Z}]*` + ampmPat),
 
 	// "13:21:36 GMT"
 	// "15:29 GMT"
 	// "12:35:44+00:00"
 	// "23:59:59.9942+01:00"
-	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[:](?P<min>\d{2})(?:[:](?P<sec>\d{2})(?P<fractional>[.]\d+)?)?\s*` + tzPat),
+	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[:](?P<min>\d{2})(?:[:](?P<sec>\d{2})(?P<fractional>[.]\d+)?)?[\s\p{Z}]*` + tzPat),
 
 	// "00.01 BST"
-	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[.](?P<min>\d{2})(?:[.](?P<sec>\d{2}))?\s*` + tzPat),
+	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[.](?P<min>\d{2})(?:[.](?P<sec>\d{2}))?[\s\p{Z}]*` + tzPat),
 
 	// "14:21:01"
 	// "14:21"

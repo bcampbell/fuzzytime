@@ -50,8 +50,11 @@ func TestDateTimes(t *testing.T) {
 
 		{"10 ABR 2014 - 20:36 CET", "2014-04-10T20:36+01:00"},      // elpais.com
 		{"9:11 p.m. EDT April 10, 2014", "2014-04-10T21:11-04:00"}, // usatoday.com
-		// with trailing text
+
+		// some leading/trailing/embedded text in the wild
 		{"September, 26th 2011 by Christo Hall", "2011-09-26"}, // (www.thenewwolf.co.uk)
+		// ('\u00a0' is &nbsp;)
+		{"\n    By\u00a0Edgar R. BattePosted\u00a0\n    Sunday, December 20\u00a0\n2015\u00a0at\u00a0\n02:00", "2015-12-20T02:00"}, // http://www.monitor.co.ug
 
 		// some more obscure cases...
 		{"May 2008", "2008-05"},
