@@ -154,6 +154,18 @@ func TestAmbiguous(t *testing.T) {
 		{"2003-02-01", "2003-02-01"}, // for sanity check
 		{"2/3/10", "2010-02-03"},
 		{"1/2/2003", "2003-01-02"},
+
+		// these are from https://github.com/bcampbell/fuzzytime/issues/1
+		{"12/01/2016 - 12:19", "2016-12-01T12:19"},
+		{"12/01 - 12:19:01", "T12:19:01"}, // date part too ambiguous (MM/YY? DD/MM? MM/DD?)
+		{"12-01-2016 - 12:19", "2016-12-01T12:19"},
+		{"20-12-2016", ""}, // invalid as US date
+		{"20/12/2016", ""},
+		{"20.12.2016", ""},
+		{"03:43 21-12-2016", "T03:43"},
+		{"12/16/2016 - 08:00am", "2016-12-16T08:00"},
+		{"12/21/16 at 1:12 am", "2016-12-21T01:12"},
+
 		// TODO: add some US timezone tests
 	}
 	for _, dat := range usaData {
@@ -175,6 +187,17 @@ func TestAmbiguous(t *testing.T) {
 		{"1/2/03", "2003-02-01"},
 		{"4:48PM GMT 22/02/2008", "2008-02-22T16:48Z"},
 		{"4:48PM BST 22/02/2008", "2008-02-22T16:48+01:00"},
+
+		// these are from https://github.com/bcampbell/fuzzytime/issues/1
+		{"12/01/2016 - 12:19", "2016-01-12T12:19"},
+		{"12/01 - 12:19:01", "T12:19:01"}, // date part too ambiguous (MM/YY? DD/MM? MM/DD?)
+		{"12-01-2016 - 12:19", "2016-01-12T12:19"},
+		{"20-12-2016", "2016-12-20"},
+		{"20/12/2016", "2016-12-20"},
+		{"20.12.2016", "2016-12-20"},
+		{"03:43 21-12-2016", "2016-12-21T03:43"},
+		{"12/16/2016 - 08:00am", "T08:00"}, // invalid month
+		{"12/21/16 at 1:12 am", "T01:12"},  // invalid month
 	}
 	for _, dat := range ukData {
 		dt, _, err := WesternContext.Extract(dat.in)
