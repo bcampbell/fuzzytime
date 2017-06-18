@@ -1,5 +1,7 @@
 # fuzzytime
 
+[![Build Status](https://travis-ci.org/variar/fuzzytime.svg?branch=master)](https://travis-ci.org/variar/fuzzytime)
+
 A date/time parsing package for Go.
 
 Documentation:
@@ -30,5 +32,3 @@ fmt.Println(dt.ISOFormat())
 // T14:51
 }
 ```
-
-
