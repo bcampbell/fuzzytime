@@ -50,13 +50,13 @@ var dateCrackers = []*regexp.Regexp{
 	// 11/2/10
 	// 11-02-10
 	// 11.02.10
-	regexp.MustCompile(`(?i)(?P<x1>\d{1,2})[/-](?P<x2>\d{1,2})[/-](?P<x3>\d{2})`),
-	/*
-	   # TODO:
-	   # year/month only
+	regexp.MustCompile(`(?i)(?P<x1>\d{1,2})[/.-](?P<x2>\d{1,2})[/.-](?P<x3>\d{2})`),
+	/*.
+	  # TODO:
+	  # year/month only
 
-	   # "May/June 2011" (common for publications) - just use second month
-	   r'(?P<cruftmonth>\w{3,})/(?P<month>\w{3,})[\s\p{Z}]+(?P<year>\d{4})',
+	  # "May/June 2011" (common for publications) - just use second month
+	  r'(?P<cruftmonth>\w{3,})/(?P<month>\w{3,})[\s\p{Z}]+(?P<year>\d{4})',
 	*/
 
 	// Missing year, eg
