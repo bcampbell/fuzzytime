@@ -77,6 +77,10 @@ func TestDateTimes(t *testing.T) {
 		// http://en.wikipedia.org/wiki/Date_and_time_notation_in_the_United_States#Date-time_group
 		//{"091630Z JUL 11", "2011-07T09:16:30Z"
 
+		// Russian
+		{"Май 2008", "2008-05"},
+		{"10 апреля 2014", "2014-04-10"},
+
 		// *****
 		// Ones that should fail
 		// *****
@@ -85,6 +89,7 @@ func TestDateTimes(t *testing.T) {
 		{"03/09/2007", ""}, //(Sky News blogs, mirror)
 		{"03/09/12", ""},
 		{"01.12.2011", ""},
+		{"01.12.11", ""},
 
 		// time or date?
 		{"10.12", ""},
@@ -114,7 +119,7 @@ func TestDateTimes(t *testing.T) {
 	for _, dat := range testData {
 		dt, _, _ := Extract(dat.in)
 		//if err != nil {
-		//	t.Errorf("Extract(%s) failed: %s", dat.in, err)
+		// t.Errorf("Extract(%s) failed: %s", dat.in, err)
 		//}
 		got := dt.ISOFormat()
 		if got != dat.expected {
@@ -154,6 +159,7 @@ func TestAmbiguous(t *testing.T) {
 		{"2003-02-01", "2003-02-01"}, // for sanity check
 		{"2/3/10", "2010-02-03"},
 		{"1/2/2003", "2003-01-02"},
+		{"1.2.2003", "2003-01-02"},
 
 		// these are from https://github.com/bcampbell/fuzzytime/issues/1
 		{"12/01/2016 - 12:19", "2016-12-01T12:19"},
@@ -195,6 +201,7 @@ func TestAmbiguous(t *testing.T) {
 		{"20-12-2016", "2016-12-20"},
 		{"20/12/2016", "2016-12-20"},
 		{"20.12.2016", "2016-12-20"},
+		{"20.12.16", "2016-12-20"},
 		{"03:43 21-12-2016", "2016-12-21T03:43"},
 		{"12/16/2016 - 08:00am", "T08:00"}, // invalid month
 		{"12/21/16 at 1:12 am", "T01:12"},  // invalid month
