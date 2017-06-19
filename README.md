@@ -1,6 +1,6 @@
 # fuzzytime
 
-[![Build Status](https://travis-ci.org/variar/fuzzytime.svg?branch=master)](https://travis-ci.org/variar/fuzzytime)
+[![Build Status](https://travis-ci.org/bcampbell/fuzzytime.svg?branch=master)](https://travis-ci.org/bcampbell/fuzzytime)
 
 A date/time parsing package for Go.
 
