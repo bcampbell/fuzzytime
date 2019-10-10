@@ -132,7 +132,7 @@ func (t *Time) String() string {
 		second = fmt.Sprintf("%02d", t.Second())
 	}
 	if t.HasFractional() {
-		fractional = fmt.Sprintf(".%d", t.Fractional())
+		fractional = fmt.Sprintf(".%03d", t.Fractional())
 	}
 	if t.HasTZOffset() {
 		tz = OffsetToTZ(t.TZOffset())
@@ -153,7 +153,7 @@ func (t *Time) ISOFormat() string {
 			if t.HasSecond() {
 				if t.HasFractional() {
 					out = fmt.Sprintf(
-						"%02d:%02d:%02d.%d",
+						"%02d:%02d:%02d.%03d",
 						t.Hour(),
 						t.Minute(),
 						t.Second(),

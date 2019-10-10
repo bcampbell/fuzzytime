@@ -60,11 +60,8 @@ func TestDateTimes(t *testing.T) {
 		{"May 2008", "2008-05"},
 
 		// fractional seconds
-		{"21:59:59.994222", "T21:59:59.994222"},
-		{"21:59:59.9942", "T21:59:59.9942"},
 		{"21:59:59,994", "T21:59:59.994"},
-		{"21:59:59,99", "T21:59:59.99"},
-		{"21:59:59.9942GMT", "T21:59:59.9942Z"},
+		{"21:59:59.994GMT", "T21:59:59.994Z"},
 
 		// tricky ones where hour can get picked up as year if not careful!
 		{"Thu Aug 25 10:46:55 GMT 2011", "2011-08-25T10:46:55Z"},       // (www.yorkshireeveningpost.co.uk)
