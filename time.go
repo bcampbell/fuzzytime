@@ -9,6 +9,7 @@ const (
 	minuteFlag int = 0x02
 	secondFlag int = 0x04
 	tzFlag     int = 0x08
+	fractionalFlag int = 0x10
 )
 
 // Time represents a set of time fields, any of which may be unset.
@@ -18,6 +19,7 @@ type Time struct {
 	hour     int
 	minute   int
 	second   int
+	fractional int
 	tzOffset int // offset from UTC, in seconds
 }
 
@@ -29,6 +31,9 @@ func (t *Time) Minute() int { return t.minute }
 
 // Second returns the second (result undefined if field unset)
 func (t *Time) Second() int { return t.second }
+
+// Fractional returns the second (result undefined if field unset)
+func (t *Time) Fractional() int { return t.fractional }
 
 // TZOffset returns the offset from UTC, in seconds. Result
 // undefined if field is unset.
@@ -43,6 +48,9 @@ func (t *Time) SetMinute(minute int) { t.minute = minute; t.set |= minuteFlag }
 // SetSecond sets the Second field (0-59)
 func (t *Time) SetSecond(second int) { t.second = second; t.set |= secondFlag }
 
+// SetFractional sets the Fractional Second field (0-999)
+func (t *Time) SetFractional(fractional int) { t.fractional = fractional; t.set |= fractionalFlag }
+
 // SetTZOffset sets the timezone offset from UTC, in seconds
 func (t *Time) SetTZOffset(tzOffset int) { t.tzOffset = tzOffset; t.set |= tzFlag }
 
@@ -54,6 +62,9 @@ func (t *Time) HasMinute() bool { return (t.set & minuteFlag) != 0 }
 
 // HasSecond returns true if the second is set
 func (t *Time) HasSecond() bool { return (t.set & secondFlag) != 0 }
+
+// HasFractional returns true if fraction second is set
+func (t *Time) HasFractional() bool { return (t.set & fractionalFlag) != 0 }
 
 // HasTZOffset returns true if the timezone offset field is set
 func (t *Time) HasTZOffset() bool { return (t.set & tzFlag) != 0 }
@@ -72,6 +83,9 @@ func (t *Time) Equals(other *Time) bool {
 		return false
 	}
 	if t.HasSecond() && t.second != other.second {
+		return false
+	}
+	if t.HasFractional() && t.fractional != other.fractional {
 		return false
 	}
 	if t.HasTZOffset() && t.tzOffset != other.tzOffset {
@@ -93,6 +107,9 @@ func (t *Time) Conflicts(other *Time) bool {
 	if t.HasSecond() && other.HasSecond() && t.Second() != other.Second() {
 		return true
 	}
+	if t.HasFractional() && other.HasFractional() && t.Fractional() != other.Fractional() {
+		return true
+	}
 	if t.HasTZOffset() && other.HasTZOffset() && t.TZOffset() != other.TZOffset() {
 		return true
 	}
@@ -100,10 +117,11 @@ func (t *Time) Conflicts(other *Time) bool {
 	return false // no conflict
 }
 
-// String returns "hh:mm:ss+tz", with question marks in place of
-// any missing values (except for timezone, which will be blank if missing)
+// String returns "hh:mm:ss.fff+tz", with question marks in place of
+// any missing values (except for timezone and fractional seconds
+// which will be blank if missing)
 func (t *Time) String() string {
-	var hour, minute, second, tz = "??", "??", "??", ""
+	var hour, minute, second, fractional, tz = "??", "??", "??", "", ""
 	if t.HasHour() {
 		hour = fmt.Sprintf("%02d", t.Hour())
 	}
@@ -113,10 +131,13 @@ func (t *Time) String() string {
 	if t.HasSecond() {
 		second = fmt.Sprintf("%02d", t.Second())
 	}
+	if t.HasFractional() {
+		fractional = fmt.Sprintf(".%d", t.Fractional())
+	}
 	if t.HasTZOffset() {
 		tz = OffsetToTZ(t.TZOffset())
 	}
-	return hour + ":" + minute + ":" + second + tz
+	return hour + ":" + minute + ":" + second + fractional + tz
 }
 
 // Empty tests if time is blank (ie all fields unset)
@@ -130,7 +151,22 @@ func (t *Time) ISOFormat() string {
 	if t.HasHour() {
 		if t.HasMinute() {
 			if t.HasSecond() {
-				out = fmt.Sprintf("%02d:%02d:%02d", t.Hour(), t.Minute(), t.Second())
+				if t.HasFractional() {
+					out = fmt.Sprintf(
+						"%02d:%02d:%02d.%d",
+						t.Hour(),
+						t.Minute(),
+						t.Second(),
+						t.Fractional(),
+					)
+				} else {
+					out = fmt.Sprintf(
+						"%02d:%02d:%02d",
+						t.Hour(),
+						t.Minute(),
+						t.Second(),
+					)
+				}
 			} else {
 				out = fmt.Sprintf("%02d:%02d", t.Hour(), t.Minute())
 			}

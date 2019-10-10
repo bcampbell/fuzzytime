@@ -27,7 +27,7 @@ var timeCrackers = []*regexp.Regexp{
 	// "15:29 GMT"
 	// "12:35:44+00:00"
 	// "23:59:59.9942+01:00"
-	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[:](?P<min>\d{2})(?:[:](?P<sec>\d{2})(?P<fractional>[.]\d+)?)?[\s\p{Z}]*` + tzPat),
+	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[:](?P<min>\d{2})(?:[:](?P<sec>\d{2})(?:[.,](?P<fractional>\d+))?)?[\s\p{Z}]*` + tzPat),
 
 	// "00.01 BST"
 	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[.](?P<min>\d{2})(?:[.](?P<sec>\d{2}))?[\s\p{Z}]*` + tzPat),
@@ -35,7 +35,7 @@ var timeCrackers = []*regexp.Regexp{
 	// "14:21:01"
 	// "14:21"
 	// "23:59:59.9942"
-	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[:](?P<min>\d{2})(?:[:](?P<sec>\d{2})(?P<fractional>[.]\d+)?)?(?:[^\d]|\z)`),
+	regexp.MustCompile(`(?i)(?:\b|T)(?P<hour>\d{1,2})[:](?P<min>\d{2})(?:[:](?P<sec>\d{2})(?:[.,](?P<fractional>\d+))?)?(?:[^\d]|\z)`),
 }
 
 // ExtractTime tries to parse a time from a string.
@@ -51,7 +51,7 @@ func (ctx *Context) ExtractTime(s string) (Time, Span, error) {
 			continue
 		}
 
-		var hour, minute, second int = -1, -1, -1
+		var hour, minute, second, fractional int = -1, -1, -1, -1
 		var am, pm bool = false, false
 
 		var gotTZ = false
@@ -112,7 +112,15 @@ func (ctx *Context) ExtractTime(s string) (Time, Span, error) {
 				tzOffset = offset
 				gotTZ = true
 			case "fractional":
-				// ignore fractional seconds for now
+				fractional, err = strconv.Atoi(sub)
+				if err != nil {
+					fail = err
+					break
+				}
+				if fractional < 0 || fractional > 999999 {
+					fail = errors.New("bad fractional seconds value")
+					break
+				}
 			}
 
 		}
@@ -135,6 +143,9 @@ func (ctx *Context) ExtractTime(s string) (Time, Span, error) {
 			ft.SetMinute(minute)
 			if second >= 0 {
 				ft.SetSecond(second)
+			}
+			if fractional >= 0 {
+				ft.SetFractional(fractional)
 			}
 			if gotTZ {
 				ft.SetTZOffset(tzOffset)
